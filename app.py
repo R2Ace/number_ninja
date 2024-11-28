@@ -1,17 +1,20 @@
-from flask import Flask, render_template, request, redirect, url_for  # type: ignore
+# app.py
+from flask import Flask, render_template, request, redirect, url_for
 import random
 
 app = Flask(__name__)
 
-# Initialize the global variables
+# Initialize global variables
 random_number = None
 max_attempts = 5
 attempts = 0
+score = 0  # Variable for score tracking
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    global random_number, attempts, max_attempts
+    global random_number, attempts, max_attempts, score
 
+    # Initialize the random number if it's None
     if random_number is None:
         random_number = random.randint(1, 100)
         attempts = 0
@@ -33,20 +36,35 @@ def index():
             else:
                 feedback = "🎉 Letsssss go! You have guessed the correct number! 🎉"
                 feedback_type = 'success'
+                score += (max_attempts - attempts + 1)  # Example scoring
                 random_number = None
                 attempts = 0
-                return render_template('index.html', feedback=feedback, feedback_type=feedback_type, play_again=True)
+                return render_template('index.html', 
+                                       feedback=feedback, 
+                                       feedback_type=feedback_type, 
+                                       play_again=True, 
+                                       score=score)
 
             if attempts >= max_attempts:
                 feedback = f"😞 Oops, you've reached the maximum number of attempts. The correct number was {random_number}."
+                feedback_type = 'error'
                 random_number = None
                 attempts = 0
-                return render_template('index.html', feedback=feedback, feedback_type=feedback_type, play_again=True)
+                return render_template('index.html', 
+                                       feedback=feedback, 
+                                       feedback_type=feedback_type, 
+                                       play_again=True, 
+                                       score=score)
 
         else:
             feedback = "⚠️ Please enter a valid number to proceed."
 
-    return render_template('index.html', feedback=feedback, feedback_type=feedback_type, attempts=attempts, max_attempts=max_attempts)
+    return render_template('index.html', 
+                           feedback=feedback, 
+                           feedback_type=feedback_type, 
+                           attempts=attempts, 
+                           max_attempts=max_attempts, 
+                           score=score)
 
 @app.route('/play_again', methods=['GET'])
 def play_again():

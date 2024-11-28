@@ -1,0 +1,121 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.game-wrapper {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    transition: transform 0.3s ease;
+}
+
+.game-wrapper:hover {
+    transform: scale(1.02);
+}
+
+h1 {
+    margin-bottom: 25px;
+    font-size: 28px;
+    color: #333;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+input[type="number"] {
+    padding: 12px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 250px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+}
+
+input[type="number"]:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+.submit-btn, .try-again-btn {
+    padding: 12px 25px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    transition: background 0.3s, transform 0.2s;
+    margin: 5px;
+}
+
+.submit-btn {
+    background: #28a745;
+    color: white;
+}
+
+.submit-btn:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.try-again-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.try-again-btn:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+.feedback {
+    margin-top: 25px;
+    font-size: 20px;
+    color: #ff4d4d;
+}
+
+.feedback.success {
+    color: #28a745;
+}
+
+.attempts {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #555;
+}
+
+.score {
+    margin-top: 15px;
+    font-size: 18px;
+    color: #333;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .game-wrapper {
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    input[type="number"], .submit-btn, .try-again-btn {
+        width: 100%;
+        max-width: none;
+    }
+}

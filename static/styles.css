@@ -1,22 +1,58 @@
+/* static/styles.css */
+
+/* Global Styles */
 body {
     font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
     margin: 0;
     padding: 0;
-    height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
+/* Navbar Customization */
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+/* Hero Section */
+header {
+    background-image: url('https://source.unsplash.com/1600x900/?game,number');
+    background-size: cover;
+    background-position: center;
+    color: white;
+    position: relative;
+    height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+header .container {
+    position: relative;
+    z-index: 1;
+}
+
+header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+}
+
+header p {
+    font-size: 1.25rem;
+}
+
+/* Game Section */
 .game-wrapper {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 40px;
-    border-radius: 15px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    text-align: center;
-    max-width: 400px;
-    width: 90%;
     transition: transform 0.3s ease;
 }
 
@@ -24,98 +60,23 @@ body {
     transform: scale(1.02);
 }
 
-h1 {
-    margin-bottom: 25px;
-    font-size: 28px;
-    color: #333;
+.alert {
+    font-size: 1.1rem;
 }
 
-form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-input[type="number"] {
-    padding: 12px;
-    font-size: 16px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    width: 100%;
-    max-width: 250px;
-    margin-bottom: 20px;
-    transition: border-color 0.3s;
-}
-
-input[type="number"]:focus {
-    border-color: #007bff;
-    outline: none;
-}
-
-.submit-btn, .try-again-btn {
-    padding: 12px 25px;
-    font-size: 16px;
-    cursor: pointer;
-    border: none;
-    border-radius: 8px;
-    transition: background 0.3s, transform 0.2s;
-    margin: 5px;
-}
-
-.submit-btn {
-    background: #28a745;
-    color: white;
-}
-
-.submit-btn:hover {
-    background: #218838;
-    transform: translateY(-2px);
-}
-
-.try-again-btn {
-    background: #dc3545;
-    color: white;
-}
-
-.try-again-btn:hover {
-    background: #c82333;
-    transform: translateY(-2px);
-}
-
-.feedback {
-    margin-top: 25px;
-    font-size: 20px;
-    color: #ff4d4d;
-}
-
-.feedback.success {
-    color: #28a745;
-}
-
-.attempts {
-    margin-top: 10px;
-    font-size: 16px;
-    color: #555;
-}
-
-.score {
-    margin-top: 15px;
-    font-size: 18px;
-    color: #333;
+/* Footer */
+footer p {
+    margin: 0;
+    font-size: 1rem;
 }
 
 /* Responsive Design */
-@media (max-width: 600px) {
-    .game-wrapper {
-        padding: 20px;
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2rem;
     }
 
-    h1 {
-        font-size: 24px;
-    }
-
-    input[type="number"], .submit-btn, .try-again-btn {
-        width: 100%;
-        max-width: none;
+    header p {
+        font-size: 1rem;
     }
 }

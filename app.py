@@ -1,6 +1,7 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for # type: ignore
+from flask import Flask, render_template, request, redirect, url_for  # type: ignore
 import random
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -20,7 +21,7 @@ def index():
         attempts = 0
 
     feedback = None
-    feedback_type = 'error'  # Default feedback type
+    feedback_type = 'danger'  # Default feedback type
 
     if request.method == 'POST':
         user_guess = request.form.get('guess')
@@ -31,8 +32,10 @@ def index():
 
             if user_guess < random_number:
                 feedback = "Oops, your guess is too low!"
+                feedback_type = 'error'
             elif user_guess > random_number:
                 feedback = "Oops, your guess is too high!"
+                feedback_type = 'error'
             else:
                 feedback = "🎉 Letsssss go! You have guessed the correct number! 🎉"
                 feedback_type = 'success'
@@ -43,18 +46,20 @@ def index():
                                        feedback=feedback, 
                                        feedback_type=feedback_type, 
                                        play_again=True, 
-                                       score=score)
+                                       score=score,
+                                       current_year=datetime.now().year)
 
             if attempts >= max_attempts:
                 feedback = f"😞 Oops, you've reached the maximum number of attempts. The correct number was {random_number}."
-                feedback_type = 'error'
+                feedback_type = 'danger'
                 random_number = None
                 attempts = 0
                 return render_template('index.html', 
                                        feedback=feedback, 
                                        feedback_type=feedback_type, 
                                        play_again=True, 
-                                       score=score)
+                                       score=score,
+                                       current_year=datetime.now().year)
 
         else:
             feedback = "⚠️ Please enter a valid number to proceed."
@@ -64,7 +69,8 @@ def index():
                            feedback_type=feedback_type, 
                            attempts=attempts, 
                            max_attempts=max_attempts, 
-                           score=score)
+                           score=score,
+                           current_year=datetime.now().year)
 
 @app.route('/play_again', methods=['GET'])
 def play_again():

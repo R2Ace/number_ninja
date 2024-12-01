@@ -1,0 +1,17 @@
+# Python virtual environments
+venv/
+env/
+.venv/
+
+# Node modules
+frontend/node_modules/
+
+# Build directories
+frontend/build/
+
+# Miscellaneous
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store

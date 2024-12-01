@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for # type: ignore
 import random
 
 app = Flask(__name__)
@@ -16,7 +16,7 @@ def index():
 
     # Initialize the random number if it's None
     if random_number is None:
-        random_number = random.randint(1, 100)
+        random_number = random.randint(1, 1000)
         attempts = 0
 
     feedback = None
@@ -69,7 +69,7 @@ def index():
 @app.route('/play_again', methods=['GET'])
 def play_again():
     global random_number, attempts
-    random_number = random.randint(1, 100)
+    random_number = random.randint(1, 1000)
     attempts = 0
     return redirect(url_for('index'))
 

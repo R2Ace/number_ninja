@@ -12,9 +12,9 @@
 </head>
 <body>
     <div class="game-wrapper">
-        <h1>Rob's Guessing Game</h1>
+        <h1>Rob's UNBEATABLE GAME FOR REAL</h1>
         <form action="{{ url_for('index') }}" method="POST">
-            <input type="number" name="guess" placeholder="Enter your guess" min="1" max="100" required>
+            <input type="number" name="guess" placeholder="Enter your number" min="1" max="1000" required>
             <input type="submit" value="Submit" class="submit-btn">
         </form>
         {% if feedback %}

@@ -1,6 +1,7 @@
 // frontend/src/components/Banner.js
 import React from 'react';
-import logo from '../assets/logo.png'; // Add your logo image to src/assets/
+import logo from '../assets/Luminary_Labz.svg'; // Add your logo image to src/assets/
+import './Banner.css';
 
 const Banner = () => {
     return (

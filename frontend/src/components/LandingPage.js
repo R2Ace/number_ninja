@@ -17,7 +17,7 @@ const LandingPage = () => {
             
             <h1 className="text-5xl md:text-6xl font-bold text-white">
               Think You Can Beat
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600"> the Unbeatable?</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600"> the Almost Unbeatable cause of Jalina?</span>
             </h1>
             
             <p className="text-xl text-gray-300">

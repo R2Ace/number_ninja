@@ -1,19 +1,28 @@
-# backend/app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import random
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Configure CORS to allow requests from http://localhost:3000 to /api/*
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://localhost:3000"}}, methods=['GET', 'POST', 'OPTIONS'])
+
 
 # Game state (for simplicity, using in-memory storage; consider using a database for scalability)
 game_state = {}
-
 MAX_ATTEMPTS = 5
+
+@app.route('/api/hello', methods=['GET'])
+def hello():
+    return jsonify({"message": "Hello from Flask!"}), 200
+
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({"message": "Welcome to the Number Ninja API"}), 200
 
 @app.route('/api/start', methods=['POST'])
 def start_game():
+    print("Received request to /api/start")
     session_id = request.json.get('session_id')
     if not session_id:
         return jsonify({'error': 'Session ID is required.'}), 400
@@ -95,4 +104,4 @@ def get_score():
     return jsonify({'score': state['score']}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

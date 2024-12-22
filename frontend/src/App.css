@@ -1,58 +1,14 @@
 /* frontend/src/App.css */
-
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 body {
     font-family: 'Roboto', sans-serif;
-    background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
     margin: 0;
     padding: 0;
+    background: linear-gradient(to bottom, #0f172a, #1e293b);
+    min-height: 100vh;
 }
 
-.hero-section {
-    background-image: url('https://source.unsplash.com/1600x900/?game,number');
-    background-size: cover;
-    background-position: center;
-    color: white;
-    position: relative;
-    height: 60vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+/* You can remove the hero-section styles since we're using Tailwind for that now */
 
-.hero-section::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-}
-
-.hero-section .container {
-    position: relative;
-    z-index: 1;
-}
-
-.hero-section h1 {
-    font-size: 3rem;
-    font-weight: 700;
-}
-
-.hero-section p {
-    font-size: 1.25rem;
-}
-
-@media (max-width: 768px) {
-    .hero-section h1 {
-        font-size: 2rem;
-    }
-
-    .hero-section p {
-        font-size: 1rem;
-    }
-}
-
-/* Additional styles as needed */
+/* If you need any additional global styles, add them here */

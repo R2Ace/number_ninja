@@ -6,6 +6,7 @@ import Footer from './components/Footer';
 import LandingPage from './components/LandingPage';
 import Game from './components/Game';
 import Login from './components/Login';
+import LearnMore from './components/LearnMore';
 import './App.css'; // Import global styles
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/game" element={<Game />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/learn" element={<LearnMore />} />
                 </Routes>
                 <Footer />
             </div>

@@ -3,6 +3,41 @@ import { startGame, makeGuess, resetGame } from '../services/api';
 import successSound from '../assets/success.mp3';
 import errorSound from '../assets/error.mp3';
 import { Target, RefreshCw, Send, Trophy } from 'lucide-react';
+import {toPng} from 'html-to-image';
+
+// Share Game Result Component
+const ShareGameResult = ({ score, attempts }) => {
+    const handleShare = () => {
+        const node = document.getElementById('share-content');
+        toPng(node)
+            .then((dataUrl) => {
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = 'number-ninja-result.png';
+                link.click();
+            })
+            .catch((err) => {
+                console.error('Error generating image:', err);
+            });
+    };
+
+    return (
+        <div id="share-content" className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 text-center">
+            <h3 className="text-2xl font-bold text-white mb-4">Great Game!</h3>
+            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-lg mb-6">
+                <p className="text-blue-400 text-lg">Score: {score}</p>
+                <p className="text-gray-400">Solved in {attempts} attempts</p>
+            </div>
+            <p className="text-gray-300 mb-4">Share your achievement on Instagram!</p>
+            <button
+                onClick={handleShare}
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-white font-medium hover:from-purple-700 hover:to-pink-700 transition-all"
+            >
+                Save Image to Share
+            </button>
+        </div>
+    );
+};
 
 const Game = () => {
     const [sessionId, setSessionId] = useState(null);
@@ -16,8 +51,8 @@ const Game = () => {
 
     // Leaderboard data
     const leaderboard = [
-        { name: "Jalina", score: 500, date: "2024-03-20" },
-        { name: "Naika", score: 500, date: "2024-03-19" }
+        { name: "Jalina", score: 500, date: "2024-12-20" },
+        { name: "Naika", score: 500, date: "2024-11-19" }
     ];
 
     useEffect(() => {
@@ -186,6 +221,12 @@ const Game = () => {
                     </div>
                 </div>
             </div>
+            {gameOver && (
+                <ShareGameResult 
+                    score={score} 
+                    attempts={attempts}
+                />
+            )}
         </div>
     );
 };

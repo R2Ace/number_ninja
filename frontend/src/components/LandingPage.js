@@ -33,9 +33,12 @@ const LandingPage = () => {
                 <Play className="w-5 h-5 mr-2" />
                 Play Now
               </Link>
-              <button className="px-6 py-3 rounded-lg border border-gray-600 text-gray-300 font-semibold hover:bg-gray-800 transition-all">
+              <Link 
+                to="/learn" 
+                className="px-6 py-3 rounded-lg border border-gray-600 text-gray-300 font-semibold hover:bg-gray-800 transition-all"
+              >
                 Learn More
-              </button>
+              </Link>
             </div>
 
             <div className="flex items-center gap-4 text-sm text-gray-400">

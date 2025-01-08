@@ -1,5 +1,9 @@
 # backend/config.py
+import os
+
 class Config:
-    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/number_ninja'
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'postgresql://localhost/number_ninja')
+    if SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('postgres://', 'postgresql://', 1)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = 'dev'  # Change this to a random string for production
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev')

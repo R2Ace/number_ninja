@@ -3,6 +3,7 @@ services:
   - type: web
     name: number-ninja-api
     env: python
+    rootDir: backend  # Add this line
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
@@ -10,10 +11,13 @@ services:
         fromDatabase:
           name: number_ninja_db
           property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
       - key: PYTHON_VERSION
-        value: 3.9.0
+        value: 3.12.8
 
 databases:
   - name: number_ninja_db
     databaseName: number_ninja
     user: number_ninja_user
+    plan: free

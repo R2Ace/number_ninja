@@ -1,26 +1,26 @@
-# Python virtual environments
+# Python
 venv/
-backend/venv/
-env/
-.env
 *.pyc
 __pycache__/
 *.pyo
 *.pyd
-
-# Node modules and build directories
-frontend/node_modules/
-frontend/build/
-frontend/.env
-
-# Miscellaneous
-.DS_Store
-*.log
 *.sqlite3
 
-# IDE and editor settings
+# Node
+node_modules/
+build/
+
+# Environment files
+.env*
+.env.local
+.env.development
+.env.production
+
+# System
+.DS_Store
+*.log
+
+# IDE
 .vscode/
 .idea/
-*.sublime-project
-*.sublime-workspace
-
+*.sublime-*

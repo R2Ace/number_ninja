@@ -36,4 +36,17 @@ const TestComponent = () => {
     return <div>Check the console for response!</div>;
 };
 
+// src/services/api.js
+const BASE_URL = process.env.REACT_APP_API_URL;
+
+export const fetchData = async () => {
+    try {
+        const response = await fetch(`${BASE_URL}/endpoint`);
+        return await response.json();
+    } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+    }
+};
+
 export default TestComponent;

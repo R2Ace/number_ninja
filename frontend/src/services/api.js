@@ -1,97 +1,117 @@
 // frontend/src/services/api.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = `${process.env.REACT_APP_API_URL}/api`;
+console.log('API Base URL:', API_BASE_URL);  // Debug log
 
-// Add alert to show what URL we're using
-alert(`API URL being used: ${API_BASE_URL}`);
+// Test connection function
+export const testConnection = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/test`);
+        alert(`Test response: ${JSON.stringify(response.data)}`);
+        return response;
+    } catch (error) {
+        alert(`Test failed: ${error.message}\nAPI URL: ${API_BASE_URL}`);
+        throw error;
+    }
+};
 
 export const startGame = (sessionId) => {
-    alert(`Starting new game with session: ${sessionId}`);
+    console.log('Starting game with session:', sessionId);
     return axios.post(`${API_BASE_URL}/start`, { session_id: sessionId }, {
         headers: { 'Content-Type': 'application/json' }
     })
     .then(response => {
-        alert(`Game started successfully: ${JSON.stringify(response.data)}`);
+        console.log('Start game response:', response.data);
         return response;
     })
     .catch(error => {
-        alert(`Error starting game: ${error.message}`);
+        console.error('Start game error:', error.response?.data || error.message);
+        alert(`Start game error: ${error.message}\nAPI URL: ${API_BASE_URL}`);
         throw error;
     });
 };
 
 export const makeGuess = (sessionId, guess) => {
-    alert(`Sending guess: ${guess}`);
-    return axios.post(`${API_BASE_URL}/guess`, { session_id: sessionId, guess }, {
+    console.log('Making guess:', { sessionId, guess });
+    return axios.post(`${API_BASE_URL}/guess`, { 
+        session_id: sessionId, 
+        guess: parseInt(guess) 
+    }, {
         headers: { 'Content-Type': 'application/json' }
     })
     .then(response => {
-        alert(`Server response: ${JSON.stringify(response.data)}`);
+        console.log('Guess response:', response.data);
         return response;
     })
     .catch(error => {
-        alert(`Error making guess: ${error.message}\nAPI URL: ${API_BASE_URL}`);
+        console.error('Guess error:', error.response?.data || error.message);
+        alert(`Guess error: ${error.message}\nAPI URL: ${API_BASE_URL}`);
         throw error;
     });
 };
 
 export const resetGame = (sessionId) => {
-    alert('Resetting game...');
+    console.log('Resetting game:', sessionId);
     return axios.post(`${API_BASE_URL}/reset`, { session_id: sessionId }, {
         headers: { 'Content-Type': 'application/json' }
     })
     .then(response => {
-        alert(`Game reset: ${JSON.stringify(response.data)}`);
+        console.log('Reset game response:', response.data);
         return response;
     })
     .catch(error => {
-        alert(`Error resetting game: ${error.message}`);
+        console.error('Reset game error:', error.response?.data || error.message);
+        alert(`Reset error: ${error.message}\nAPI URL: ${API_BASE_URL}`);
         throw error;
     });
 };
 
 export const getScore = (sessionId) => {
+    console.log('Getting score:', sessionId);
     return axios.get(`${API_BASE_URL}/score`, { 
         params: { session_id: sessionId },
         headers: { 'Content-Type': 'application/json' }
     })
     .then(response => {
-        alert(`Score retrieved: ${JSON.stringify(response.data)}`);
+        console.log('Get score response:', response.data);
         return response;
     })
     .catch(error => {
-        alert(`Error getting score: ${error.message}`);
+        console.error('Get score error:', error.response?.data || error.message);
+        alert(`Score error: ${error.message}\nAPI URL: ${API_BASE_URL}`);
         throw error;
     });
 };
 
 export const login = (credentials) => {
-    alert('Attempting login...');
+    console.log('Attempting login...');
     return axios.post(`${API_BASE_URL}/login`, credentials, {
         headers: { 'Content-Type': 'application/json' }
     })
     .then(response => {
-        alert(`Login successful: ${JSON.stringify(response.data)}`);
+        console.log('Login response:', response.data);
         return response;
     })
     .catch(error => {
-        alert(`Login error: ${error.message}`);
+        console.error('Login error:', error.response?.data || error.message);
+        alert(`Login error: ${error.message}\nAPI URL: ${API_BASE_URL}`);
         throw error;
     });
 };
 
 export const register = (userData) => {
-    alert('Attempting registration...');
+    console.log('Attempting registration...');
     return axios.post(`${API_BASE_URL}/register`, userData, {
         headers: { 'Content-Type': 'application/json' }
     })
     .then(response => {
-        alert(`Registration successful: ${JSON.stringify(response.data)}`);
+        console.log('Registration response:', response.data);
         return response;
     })
     .catch(error => {
-        alert(`Registration error: ${error.message}`);
+        console.error('Registration error:', error.response?.data || error.message);
+        alert(`Registration error: ${error.message}\nAPI URL: ${API_BASE_URL}`);
         throw error;
     });
 };

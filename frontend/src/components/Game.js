@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { startGame, makeGuess, resetGame } from '../services/api';
+import { startGame, makeGuess, resetGame, testConnection } from '../services/api';
 import successSound from '../assets/success.mp3';
 import errorSound from '../assets/error.mp3';
-import { Target, RefreshCw, Send, Trophy } from 'lucide-react';
-import {toPng} from 'html-to-image';
+import { Target, RefreshCw, Send, Trophy, Bug } from 'lucide-react';
+import { toPng } from 'html-to-image';
 
-// Share Game Result Component
+// Share Game Result Component (unchanged)
 const ShareGameResult = ({ score, attempts }) => {
     const handleShare = () => {
         const node = document.getElementById('share-content');
@@ -18,6 +18,7 @@ const ShareGameResult = ({ score, attempts }) => {
             })
             .catch((err) => {
                 console.error('Error generating image:', err);
+                alert(`Error generating image: ${err.message}`);
             });
     };
 
@@ -49,6 +50,9 @@ const Game = () => {
     const [score, setScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
 
+    // Debug info
+    console.log('Current API URL:', process.env.REACT_APP_API_URL);
+
     // Leaderboard data
     const leaderboard = [
         { name: "Jalina", score: 500, date: "2024-12-20" },
@@ -58,13 +62,17 @@ const Game = () => {
     useEffect(() => {
         // Generate a unique session ID (simple implementation)
         const id = Date.now().toString();
+        console.log('Generated session ID:', id);
         setSessionId(id);
+        
         startGame(id)
             .then(response => {
-                console.log(response.data.message);
+                console.log('Game started:', response.data.message);
+                alert(`Game started successfully! Session ID: ${id}`);
             })
             .catch(error => {
                 console.error('Error starting game:', error);
+                alert(`Error starting game: ${error.message}`);
             });
     }, []);
 
@@ -72,9 +80,11 @@ const Game = () => {
         e.preventDefault();
         if (!guess) return;
 
+        console.log('Submitting guess:', guess);
         makeGuess(sessionId, parseInt(guess))
             .then(response => {
                 const data = response.data;
+                console.log('Guess response:', data);
                 setFeedback(data.feedback);
                 setFeedbackType(data.feedback_type);
                 if (data.attempts) setAttempts(data.attempts);
@@ -85,23 +95,35 @@ const Game = () => {
             })
             .catch(error => {
                 console.error('Error making guess:', error);
+                alert(`Error making guess: ${error.message}`);
             });
         setGuess('');
     };
 
     const handlePlayAgain = () => {
+        console.log('Resetting game...');
         resetGame(sessionId)
             .then(response => {
-                console.log(response.data.message);
+                console.log('Game reset:', response.data.message);
                 setFeedback('');
                 setFeedbackType('');
                 setAttempts(0);
                 setGameOver(false);
                 setGuess('');
+                alert('Game reset successfully!');
             })
             .catch(error => {
                 console.error('Error resetting game:', error);
+                alert(`Error resetting game: ${error.message}`);
             });
+    };
+
+    const handleTestConnection = async () => {
+        try {
+            await testConnection();
+        } catch (error) {
+            console.error('Test connection failed:', error);
+        }
     };
 
     const playSound = (type) => {
@@ -113,7 +135,19 @@ const Game = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-16 px-4">
+            {/* Debug Button */}
+            <div className="fixed top-20 right-4 z-50">
+                <button
+                    onClick={handleTestConnection}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+                >
+                    <Bug className="w-4 h-4" />
+                    <span>Test Connection</span>
+                </button>
+            </div>
+
             <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-8">
+                {/* Rest of your component remains the same */}
                 {/* Game Section - Takes up 2 columns */}
                 <div className="md:col-span-2">
                     <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
@@ -193,7 +227,7 @@ const Game = () => {
                     </div>
                 </div>
 
-                {/* Leaderboard Section - Takes up 1 column */}
+                {/* Leaderboard Section */}
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 h-fit">
                     <div className="flex items-center space-x-3 mb-6">
                         <Trophy className="w-6 h-6 text-yellow-500" />

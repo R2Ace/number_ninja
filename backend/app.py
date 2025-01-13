@@ -11,14 +11,10 @@ app = Flask(__name__)
 #CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": ["http://localhost:3000", "https://numberninja-red.vercel.app", "https://*.vercel.app", "https:localhost:*"] }}, methods=['GET', 'POST', 'OPTIONS'])
 CORS(app, 
     resources={r"/api/*": {
-        "origins": [
-            "http://localhost:3000",
-            "https://numberninja-red.vercel.app",  # Your Vercel frontend URL
-            "https://number-ninja.onrender.com"     # Your Render backend URL
-        ]
+        "origins": "*"  # Temporarily allow all origins while we debug
     }}, 
     methods=['GET', 'POST', 'OPTIONS'],
-    supports_credentials=False  # Change this to False for now
+    supports_credentials=False
 )
 # Configure the Flask app with the database settings
 app.config.from_object(Config)

@@ -1,51 +1,95 @@
 // frontend/src/services/api.js
-import React, {useEffect} from 'react';
 import axios from 'axios';
 
-// Use environment variable for API URL
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 export const startGame = (sessionId) => {
-    return axios.post(`${API_BASE_URL}/start`, { session_id: sessionId }, {
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true 
-    });
+   console.log('Starting game:', { sessionId });
+   return axios.post(`${API_BASE_URL}/start`, { session_id: sessionId }, {
+       headers: { 'Content-Type': 'application/json' }
+   })
+   .then(response => {
+       console.log('Start game response:', response.data);
+       return response;
+   })
+   .catch(error => {
+       console.error('Start game error:', error);
+       throw error;
+   });
 };
 
 export const makeGuess = (sessionId, guess) => {
-    return axios.post(`${API_BASE_URL}/guess`, { session_id: sessionId, guess }, {
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true
-    });
+   console.log('Making guess:', { sessionId, guess });
+   return axios.post(`${API_BASE_URL}/guess`, { session_id: sessionId, guess }, {
+       headers: { 'Content-Type': 'application/json' }
+   })
+   .then(response => {
+       console.log('Guess response:', response.data);
+       return response;
+   })
+   .catch(error => {
+       console.error('Guess error:', error);
+       throw error;
+   });
 };
 
 export const resetGame = (sessionId) => {
-    return axios.post(`${API_BASE_URL}/reset`, { session_id: sessionId }, {
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true
-    });
+   console.log('Resetting game:', { sessionId });
+   return axios.post(`${API_BASE_URL}/reset`, { session_id: sessionId }, {
+       headers: { 'Content-Type': 'application/json' }
+   })
+   .then(response => {
+       console.log('Reset game response:', response.data);
+       return response;
+   })
+   .catch(error => {
+       console.error('Reset game error:', error);
+       throw error;
+   });
 };
 
 export const getScore = (sessionId) => {
-    return axios.get(`${API_BASE_URL}/score`, { 
-        params: { session_id: sessionId },
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true
-    });
+   console.log('Getting score:', { sessionId });
+   return axios.get(`${API_BASE_URL}/score`, { 
+       params: { session_id: sessionId },
+       headers: { 'Content-Type': 'application/json' }
+   })
+   .then(response => {
+       console.log('Get score response:', response.data);
+       return response;
+   })
+   .catch(error => {
+       console.error('Get score error:', error);
+       throw error;
+   });
 };
 
-// Removed TestComponent and fetchData as they're not needed
-
 export const login = (credentials) => {
-    return axios.post(`${API_BASE_URL}/login`, credentials, {
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true
-    });
+   console.log('Logging in...');
+   return axios.post(`${API_BASE_URL}/login`, credentials, {
+       headers: { 'Content-Type': 'application/json' }
+   })
+   .then(response => {
+       console.log('Login response:', response.data);
+       return response;
+   })
+   .catch(error => {
+       console.error('Login error:', error);
+       throw error;
+   });
 };
 
 export const register = (userData) => {
-    return axios.post(`${API_BASE_URL}/register`, userData, {
-        headers: { 'Content-Type': 'application/json' },
-        withCredentials: true
-    });
+   console.log('Registering user...');
+   return axios.post(`${API_BASE_URL}/register`, userData, {
+       headers: { 'Content-Type': 'application/json' }
+   })
+   .then(response => {
+       console.log('Register response:', response.data);
+       return response;
+   })
+   .catch(error => {
+       console.error('Register error:', error);
+       throw error;
+   });
 };

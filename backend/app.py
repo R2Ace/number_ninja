@@ -8,7 +8,23 @@ from config import Config
 
 app = Flask(__name__)
 # Configure CORS to allow requests from http://localhost:3000 to /api/*
-CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": ["http://localhost:3000", "https://numberninja-red.vercel.app", "https://*.vercel.app", "https:localhost:*"] }}, methods=['GET', 'POST', 'OPTIONS'])
+#CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": ["http://localhost:3000", "https://numberninja-red.vercel.app", "https://*.vercel.app", "https:localhost:*"] }}, methods=['GET', 'POST', 'OPTIONS'])
+CORS(app, 
+    resources={r"/api/*": {
+        "origins": [
+            "http://localhost:3000",
+            "https://numberninja-red.vercel.app",
+            "http://localhost:5000",
+            "*"  # Temporarily allow all origins for testing
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type"],
+        "supports_credentials": True,
+        "max_age": 120,
+        "send_wildcard": False
+    }}
+)
 # Configure the Flask app with the database settings
 app.config.from_object(Config)
 db = SQLAlchemy(app)

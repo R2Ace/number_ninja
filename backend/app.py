@@ -13,17 +13,12 @@ CORS(app,
     resources={r"/api/*": {
         "origins": [
             "http://localhost:3000",
-            "https://numberninja-red.vercel.app",
-            "http://localhost:5000",
-            "*"  # Temporarily allow all origins for testing
-        ],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "expose_headers": ["Content-Type"],
-        "supports_credentials": True,
-        "max_age": 120,
-        "send_wildcard": False
-    }}
+            "https://numberninja-red.vercel.app",  # Your Vercel frontend URL
+            "https://number-ninja.onrender.com"     # Your Render backend URL
+        ]
+    }}, 
+    methods=['GET', 'POST', 'OPTIONS'],
+    supports_credentials=False  # Change this to False for now
 )
 # Configure the Flask app with the database settings
 app.config.from_object(Config)
@@ -213,6 +208,11 @@ def get_leaderboard():
     } for score in top_scores]
     
     return jsonify(leaderboard)
+
+@app.route('/api/test', methods=['GET'])
+def test():
+    print("Test endpoint hit!")  # This will show in your backend logs
+    return jsonify({"status": "connected"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

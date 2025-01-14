@@ -14,7 +14,9 @@ CORS(app,
     resources={r"/api/*": {
         "origins": [
             "http://localhost:3000",
-            "https://numberninja-red.vercel.app"
+            "https://numberninja-red.vercel.app",
+            "https://numberninja-rho.vercel.app",
+            "https://numberninja-*.vercel.app",
         ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"],

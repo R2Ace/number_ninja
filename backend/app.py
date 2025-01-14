@@ -9,12 +9,17 @@ from config import Config
 app = Flask(__name__)
 # Configure CORS to allow requests from http://localhost:3000 to /api/*
 #CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": ["http://localhost:3000", "https://numberninja-red.vercel.app", "https://*.vercel.app", "https:localhost:*"] }}, methods=['GET', 'POST', 'OPTIONS'])
+# In app.py, update the CORS configuration
 CORS(app, 
     resources={r"/api/*": {
-        "origins": "*"  # Temporarily allow all origins while we debug
-    }}, 
-    methods=['GET', 'POST', 'OPTIONS'],
-    supports_credentials=False
+        "origins": [
+            "http://localhost:3000",
+            "https://numberninja-red.vercel.app"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
+    }}
 )
 # Configure the Flask app with the database settings
 app.config.from_object(Config)

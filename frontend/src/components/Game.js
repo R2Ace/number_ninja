@@ -5,7 +5,7 @@ import errorSound from '../assets/error.mp3';
 import { Target, RefreshCw, Send, Trophy, Bug } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
-// Share Game Result Component (unchanged)
+// Share Game Result Component 
 const ShareGameResult = ({ score, attempts }) => {
     const handleShare = () => {
         const node = document.getElementById('share-content');

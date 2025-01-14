@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { startGame, makeGuess, resetGame, testConnection } from '../services/api';
+import { startGame, makeGuess, resetGame } from '../services/api';
 import successSound from '../assets/success.mp3';
 import errorSound from '../assets/error.mp3';
-import { Target, RefreshCw, Send, Trophy, Bug } from 'lucide-react';
+import { Target, RefreshCw, Send, Trophy } from 'lucide-react';
 import { toPng } from 'html-to-image';
 
-// Share Game Result Component 
 const ShareGameResult = ({ score, attempts }) => {
     const handleShare = () => {
         const node = document.getElementById('share-content');
@@ -18,7 +17,6 @@ const ShareGameResult = ({ score, attempts }) => {
             })
             .catch((err) => {
                 console.error('Error generating image:', err);
-                alert(`Error generating image: ${err.message}`);
             });
     };
 
@@ -40,6 +38,7 @@ const ShareGameResult = ({ score, attempts }) => {
     );
 };
 
+//Main Game Component
 const Game = () => {
     const [sessionId, setSessionId] = useState(null);
     const [guess, setGuess] = useState('');
@@ -50,29 +49,20 @@ const Game = () => {
     const [score, setScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
 
-    // Debug info
-    console.log('Current API URL:', process.env.REACT_APP_API_URL);
-
-    // Leaderboard data
     const leaderboard = [
         { name: "Jalina", score: 500, date: "2024-12-20" },
         { name: "Naika", score: 500, date: "2024-11-19" }
     ];
 
     useEffect(() => {
-        // Generate a unique session ID (simple implementation)
         const id = Date.now().toString();
-        console.log('Generated session ID:', id);
         setSessionId(id);
-        
         startGame(id)
             .then(response => {
-                console.log('Game started:', response.data.message);
-                alert(`Game started successfully! Session ID: ${id}`);
+                // Game started silently
             })
             .catch(error => {
-                console.error('Error starting game:', error);
-                alert(`Error starting game: ${error.message}`);
+                console.error('Error:', error);
             });
     }, []);
 
@@ -80,11 +70,9 @@ const Game = () => {
         e.preventDefault();
         if (!guess) return;
 
-        console.log('Submitting guess:', guess);
         makeGuess(sessionId, parseInt(guess))
             .then(response => {
                 const data = response.data;
-                console.log('Guess response:', data);
                 setFeedback(data.feedback);
                 setFeedbackType(data.feedback_type);
                 if (data.attempts) setAttempts(data.attempts);
@@ -94,36 +82,23 @@ const Game = () => {
                 playSound(data.feedback_type);
             })
             .catch(error => {
-                console.error('Error making guess:', error);
-                alert(`Error making guess: ${error.message}`);
+                console.error('Error:', error);
             });
         setGuess('');
     };
 
     const handlePlayAgain = () => {
-        console.log('Resetting game...');
         resetGame(sessionId)
-            .then(response => {
-                console.log('Game reset:', response.data.message);
+            .then(() => {
                 setFeedback('');
                 setFeedbackType('');
                 setAttempts(0);
                 setGameOver(false);
                 setGuess('');
-                alert('Game reset successfully!');
             })
             .catch(error => {
-                console.error('Error resetting game:', error);
-                alert(`Error resetting game: ${error.message}`);
+                console.error('Error:', error);
             });
-    };
-
-    const handleTestConnection = async () => {
-        try {
-            await testConnection();
-        } catch (error) {
-            console.error('Test connection failed:', error);
-        }
     };
 
     const playSound = (type) => {
@@ -135,29 +110,14 @@ const Game = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-16 px-4">
-            {/* Debug Button */}
-            <div className="fixed top-20 right-4 z-50">
-                <button
-                    onClick={handleTestConnection}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-                >
-                    <Bug className="w-4 h-4" />
-                    <span>Test Connection</span>
-                </button>
-            </div>
-
             <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-8">
-                {/* Rest of your component remains the same */}
-                {/* Game Section - Takes up 2 columns */}
                 <div className="md:col-span-2">
                     <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
-                        {/* Game Header */}
                         <div className="flex items-center space-x-3 mb-8">
                             <Target className="w-8 h-8 text-blue-500" />
                             <h2 className="text-2xl font-bold text-white">Number Ninja</h2>
                         </div>
 
-                        {/* Game Status */}
                         {!gameOver && (
                             <div className="flex justify-between items-center mb-6">
                                 <div className="text-gray-400">
@@ -171,7 +131,6 @@ const Game = () => {
                             </div>
                         )}
 
-                        {/* Game Input */}
                         {!gameOver ? (
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="relative">
@@ -204,7 +163,6 @@ const Game = () => {
                             </button>
                         )}
 
-                        {/* Feedback Message */}
                         {feedback && (
                             <div className={`mt-6 p-4 rounded-lg ${
                                 feedbackType === 'success' 
@@ -215,7 +173,6 @@ const Game = () => {
                             </div>
                         )}
 
-                        {/* Game Instructions */}
                         <div className="mt-8 pt-6 border-t border-gray-700">
                             <h3 className="text-lg font-semibold text-white mb-2">How to Play:</h3>
                             <ul className="text-gray-400 space-y-2">
@@ -227,7 +184,6 @@ const Game = () => {
                     </div>
                 </div>
 
-                {/* Leaderboard Section */}
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 h-fit">
                     <div className="flex items-center space-x-3 mb-6">
                         <Trophy className="w-6 h-6 text-yellow-500" />

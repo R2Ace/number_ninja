@@ -4,7 +4,7 @@ services:
     name: number-ninja-api-east
     env: python
     rootDir: backend
-    buildCommand: pip install -r backend/requirements.txt
+    buildCommand: pip install -requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: DATABASE_URL

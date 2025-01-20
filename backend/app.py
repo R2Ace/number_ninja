@@ -27,6 +27,7 @@ CORS(app,
 # Configure the Flask app with the database settings
 app.config.from_object(Config)
 db = SQLAlchemy(app)
+print("Flask running with DB URI:", app.config['SQLALCHEMY_DATABASE_URI'])
 
 # Initialize the Flask-Migrate extension
 migrate = Migrate(app, db)

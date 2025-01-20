@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from config import Config
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 # Configure CORS to allow requests from http://localhost:3000 to /api/*
@@ -26,6 +27,9 @@ CORS(app,
 # Configure the Flask app with the database settings
 app.config.from_object(Config)
 db = SQLAlchemy(app)
+
+# Initialize the Flask-Migrate extension
+migrate = Migrate(app, db)
 
 # Database models
 class User(db.Model):
@@ -197,25 +201,62 @@ def save_score():
 # Route to get the leaderboard
 @app.route('/api/leaderboard', methods=['GET'])
 def get_leaderboard():
-    top_scores = db.session.query(Score, User)\
-        .join(User)\
-        .order_by(Score.score.desc())\
-        .limit(10)\
-        .all()
-    
+    top_scores = Score.query \
+    .join(User) \
+    .order_by(Score.score.desc()) \
+    .limit(10) \
+    .all()
+
     leaderboard = [{
-        'username': score.User.username,
-        'score': score.Score.score,
-        'attempts': score.Score.attempts_used,
-        'date': score.Score.date.strftime('%Y-%m-%d')
-    } for score in top_scores]
-    
+    'username': item.user.username,
+    'score': item.score,
+    'attempts': item.attempts_used,
+    'date': item.date.strftime('%Y-%m-%d')
+} for item in top_scores]
+
     return jsonify(leaderboard)
+
+#Seeding the database with some test data
+@app.route('/api/seed', methods=['GET'])
+def seed_data():
+    # Check if users already exist
+    existing_john = User.query.filter_by(username='JohnDoe').first()
+    existing_jane = User.query.filter_by(username='JaneDoe').first()
+    if existing_john or existing_jane:
+        return jsonify({'message': 'Seed data already created'}), 200
+
+    # Create two users
+    user1 = User(username='JohnDoe', email='john@example.com')
+    user1.set_password('john123')  # or any password
+    user2 = User(username='JaneDoe', email='jane@example.com')
+    user2.set_password('jane123')
+
+    db.session.add_all([user1, user2])
+    db.session.commit()
+
+    return jsonify({'message': 'Seed data created with 2 users'}), 201
+
 
 @app.route('/api/test', methods=['GET'])
 def test():
     print("Test endpoint hit!")  # This will show in your backend logs
     return jsonify({"status": "connected"}), 200
+
+# Add this route to app.py to test database
+@app.route('/api/db-test', methods=['GET'])
+def test_db():
+    try:
+        # Try to make a simple query
+        user_count = User.query.count()
+        return jsonify({
+            "status": "connected",
+            "user_count": user_count
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

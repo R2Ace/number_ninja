@@ -43,3 +43,9 @@ export const register = (userData) => {
         headers: { 'Content-Type': 'application/json' }
     });
 };
+
+export const fetchLeaderboard = () => {
+    return axios.get(`${API_BASE_URL}/leaderboard`, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+};

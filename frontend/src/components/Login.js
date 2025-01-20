@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import {useNavigate} from 'react-router-dom';
 import { Target, User, Lock, Mail } from 'lucide-react';
 
 const Login = () => {
+    const navigate = useNavigate(); // Use this to redirect to another page
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({
         username: '',
@@ -26,9 +28,11 @@ const Login = () => {
             const data = await response.json();
             
             if (response.ok) {
-                // Handle successful login/register
-                console.log('Success:', data);
-                // You might want to redirect to game or store user info
+                // 3) Store user info in localStorage or context
+                localStorage.setItem('user', JSON.stringify(data));
+
+                // 4) Navigate to /game
+                navigate('/game');
             } else {
                 setError(data.error || 'An error occurred');
             }

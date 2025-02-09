@@ -161,30 +161,58 @@ def get_score():
 # Route to register a new user
 @app.route('/api/register', methods=['POST'])
 def register():
-    data = request.json
-    if User.query.filter_by(username=data['username']).first():
-        return jsonify({'error': 'Username already exists'}), 400
-    
-    user = User(username=data['username'], email=data['email'])
-    user.set_password(data['password'])
-    
-    db.session.add(user)
-    db.session.commit()
-    
-    return jsonify({'message': 'Registration successful'}), 201
+    try:
+        data = request.json
+        print("Register data received:", data)  # Debug log
+        
+        if User.query.filter_by(username=data['username']).first():
+            return jsonify({'error': 'Username exists'}), 400
+            
+        user = User(username=data['username'], email=data['email'])
+        user.set_password(data['password'])
+        
+        db.session.add(user)
+        db.session.commit()
+        print("User registered successfully")  # Debug log
+        
+        return jsonify({
+            'message': 'Registration successful',
+            'user_id': user.id,
+            'username': user.username
+        }), 201
+        
+    except Exception as e:
+        print(f"Registration error: {str(e)}")  # Error log
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 # Route to login
 @app.route('/api/login', methods=['POST'])
 def login():
-    data = request.json
-    user = User.query.filter_by(username=data['username']).first()
-    if user and user.check_password(data['password']):
-        return jsonify({
-            'message': 'Login successful',
-            'user_id': user.id,
-            'username': user.username
-        }), 200
-    return jsonify({'error': 'Invalid username or password'}), 401
+    try:
+        print("Database URL:", app.config['SQLALCHEMY_DATABASE_URI'])
+        data = request.json
+        print("Login attempt:", data['username'])
+        
+        if not data or 'username' not in data or 'password' not in data:
+            print("Missing credentials")
+            return jsonify({'error': 'Missing username or password'}), 400
+        
+        user = User.query.filter_by(username=data['username']).first()
+        if user and user.check_password(data['password']):
+            print(f"Successful login for user: {user.username}")
+            return jsonify({
+                'user_id': user.id,
+                'username': user.username,
+                'email': user.email
+            }), 200
+        else:
+            print(f"Failed login attempt for username: {data['username']}")
+            return jsonify({'error': 'Invalid username or password'}), 401
+            
+    except Exception as e:
+        print(f"Login error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 # Route to save a score
 @app.route('/api/scores', methods=['POST'])

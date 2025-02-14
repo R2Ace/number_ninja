@@ -8,6 +8,7 @@ import Game from './components/Game';
 import Login from './components/Login';
 import LearnMore from './components/LearnMore';
 import './App.css'; // Import global styles
+import GameHistory from './components/GameHistory';
 
 function App() {
     return (
@@ -19,6 +20,7 @@ function App() {
                     <Route path="/game" element={<Game />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/learn" element={<LearnMore />} />
+                    <Route path="/history" element={<GameHistory />} />
                 </Routes>
                 <Footer />
             </div>

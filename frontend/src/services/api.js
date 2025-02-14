@@ -56,3 +56,9 @@ export const getUserHistory = (userId) => {
         headers: { 'Content-Type': 'application/json' }
     });
 };
+
+export const saveScore = (scoreData) => {
+    return axios.post(`${API_BASE_URL}/scores`, scoreData, {
+        headers: { 'Content-Type': 'application/json' }
+    });
+};

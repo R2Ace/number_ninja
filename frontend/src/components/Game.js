@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { startGame, makeGuess, resetGame, fetchLeaderboard } from '../services/api';
+import { startGame, makeGuess, resetGame, fetchLeaderboard, saveScore} from '../services/api';
 import successSound from '../assets/success.mp3';
 import errorSound from '../assets/error.mp3';
 import { Target, RefreshCw, Send, Trophy } from 'lucide-react';
 import { toPng } from 'html-to-image';
+import { Link } from 'react-router-dom';
+
+
 
 const ShareGameResult = ({ score, attempts }) => {
     const handleShare = () => {
@@ -38,7 +41,6 @@ const ShareGameResult = ({ score, attempts }) => {
 };
 
 const Game = () => {
-    const [currentUser, setCurrentUser] = useState(null);
     const [sessionId, setSessionId] = useState(null);
     const [guess, setGuess] = useState('');
     const [feedback, setFeedback] = useState('');
@@ -48,13 +50,61 @@ const Game = () => {
     const [score, setScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
     const [leaderboard, setLeaderboard] = useState([]);
+    const [currentUser, setCurrentUser] = useState(JSON.parse(localStorage.getItem('user')));
 
-    useEffect(() => {
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-            setCurrentUser(JSON.parse(savedUser));
+    const playSound = (feedbackType) => {
+        const audio = new Audio(feedbackType === 'success' ? successSound : errorSound);
+        audio.play();
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!guess) return;
+
+        makeGuess(sessionId, parseInt(guess))
+            .then(response => {
+                const data = response.data;
+                setFeedback(data.feedback);
+                setFeedbackType(data.feedback_type);
+                if (data.attempts) setAttempts(data.attempts);
+                if (data.max_attempts) setMaxAttempts(data.max_attempts);
+                if (data.score) setScore(data.score);
+                
+                if (data.game_over) {
+                    handleGameOver(data.score || score, data.attempts || attempts);
+                }
+                
+                playSound(data.feedback_type);
+            })
+            .catch(error => {
+                setFeedback('An error occurred. Please try again.');
+                setFeedbackType('error');
+            });
+
+        setGuess('');
+    };
+
+    const handleGameOver = async (finalScore, attemptsUsed) => {
+        try {
+            if (currentUser?.user_id) {
+                await saveScore({
+                    score: finalScore,
+                    attempts: attemptsUsed,
+                    user_id: currentUser.user_id
+                });
+                
+                const leaderboardResponse = await fetchLeaderboard();
+                setLeaderboard(leaderboardResponse.data);
+            }
+            
+            setGameOver(true);
+            
+        } catch (err) {
+            console.error('Error saving score:', err);
+            setFeedback('Error saving your score. Please try again.');
+            setFeedbackType('error');
         }
-    }, []);
+    };
 
     useEffect(() => {
         const id = Date.now().toString();
@@ -70,29 +120,6 @@ const Game = () => {
             });
     }, []);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!guess) return;
-
-        makeGuess(sessionId, parseInt(guess))
-            .then(response => {
-                const data = response.data;
-                setFeedback(data.feedback);
-                setFeedbackType(data.feedback_type);
-                if (data.attempts) setAttempts(data.attempts);
-                if (data.max_attempts) setMaxAttempts(data.max_attempts);
-                if (data.score) setScore(data.score);
-                if (data.game_over) setGameOver(true);
-                playSound(data.feedback_type);
-            })
-            .catch(error => {
-                setFeedback('An error occurred. Please try again.');
-                setFeedbackType('error');
-            });
-
-        setGuess('');
-    };
-
     const handleReset = () => {
         resetGame(sessionId).then(() => {
             setGuess('');
@@ -105,11 +132,6 @@ const Game = () => {
             setSessionId(newId);
             startGame(newId);
         });
-    };
-
-    const playSound = (type) => {
-        const audio = new Audio(type === 'success' ? successSound : errorSound);
-        audio.play().catch(() => {});
     };
 
     return (
@@ -131,12 +153,20 @@ const Game = () => {
                                 <Target className="w-6 h-6 text-blue-500" />
                                 <h2 className="text-xl font-bold text-white">Number Ninja</h2>
                             </div>
-                            <button 
-                                onClick={handleReset}
-                                className="p-2 text-gray-400 hover:text-white transition-colors"
-                            >
-                                <RefreshCw className="w-5 h-5" />
-                            </button>
+                            <div className="flex items-center space-x-4">
+                                <Link 
+                                    to="/history" 
+                                    className="text-blue-400 hover:text-blue-300"
+                                >
+                                    View Game History
+                                </Link>
+                                <button 
+                                    onClick={handleReset}
+                                    className="p-2 text-gray-400 hover:text-white transition-colors"
+                                >
+                                    <RefreshCw className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="space-y-4 mb-6">

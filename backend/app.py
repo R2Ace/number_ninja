@@ -217,15 +217,26 @@ def login():
 # Route to save a score
 @app.route('/api/scores', methods=['POST'])
 def save_score():
-    data = request.json
-    new_score = Score(
-        score=data['score'],
-        attempts_used=data['attempts'],
-        user_id=data['user_id']
-    )
-    db.session.add(new_score)
-    db.session.commit()
-    return jsonify({'message': 'Score saved'}), 201
+    try:
+        data = request.json
+        print("Saving score:", data)  # Debug log
+        
+        if not all(key in data for key in ['score', 'attempts', 'user_id']):
+            return jsonify({'error': 'Missing required data'}), 400
+
+        new_score = Score(
+            score=data['score'],
+            attempts_used=data['attempts'],
+            user_id=data['user_id']
+        )
+        db.session.add(new_score)
+        db.session.commit()
+        print(f"Score saved successfully for user {data['user_id']}")  # Debug log
+        return jsonify({'message': 'Score saved'}), 201
+    except Exception as e:
+        print(f"Error saving score: {str(e)}")  # Error log
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 # Route to get the leaderboard
 @app.route('/api/leaderboard', methods=['GET'])

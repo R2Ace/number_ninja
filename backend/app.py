@@ -286,6 +286,67 @@ def test_db():
             "status": "error",
             "message": str(e)
         }), 500
+    
+# Route to get user history
+@app.route('/api/user/history', methods=['GET'])
+def get_user_history():
+    try:
+        user_id = request.args.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'User ID is required'}), 400
+
+        user_scores = Score.query\
+            .filter_by(user_id=user_id)\
+            .order_by(Score.date.desc())\
+            .all()
+
+        history = [{
+            'score': score.score,
+            'attempts': score.attempts_used,
+            'date': score.date.strftime('%Y-%m-%d %H:%M'),
+        } for score in user_scores]
+
+        # Add summary statistics
+        total_games = len(history)
+        if total_games > 0:
+            avg_score = sum(game['score'] for game in history) / total_games
+            avg_attempts = sum(game['attempts'] for game in history) / total_games
+        else:
+            avg_score = 0
+            avg_attempts = 0
+
+        return jsonify({
+            'history': history,
+            'stats': {
+                'total_games': total_games,
+                'average_score': round(avg_score, 2),
+                'average_attempts': round(avg_attempts, 2)
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"Error fetching game history: {str(e)}")
+        return jsonify({'error': 'Failed to fetch game history'}), 500
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

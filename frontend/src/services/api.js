@@ -49,3 +49,10 @@ export const fetchLeaderboard = () => {
         headers: { 'Content-Type': 'application/json' }
     });
 };
+
+export const getUserHistory = (userId) => {
+    return axios.get(`${API_BASE_URL}/user/history`, {
+        params: { user_id: userId },
+        headers: { 'Content-Type': 'application/json' }
+    });
+};

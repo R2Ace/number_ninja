@@ -4,7 +4,9 @@ import successSound from '../assets/success.mp3';
 import errorSound from '../assets/error.mp3';
 import { Target, RefreshCw, Send, Trophy } from 'lucide-react';
 import { toPng } from 'html-to-image';
+import Support from './Support';
 
+// Component for sharing game results
 const ShareGameResult = ({ score, attempts }) => {
     const handleShare = () => {
         const node = document.getElementById('share-content');
@@ -38,8 +40,9 @@ const ShareGameResult = ({ score, attempts }) => {
     );
 };
 
-//Main Game Component
+// Main Game Component
 const Game = () => {
+    // Game state
     const [sessionId, setSessionId] = useState(null);
     const [guess, setGuess] = useState('');
     const [feedback, setFeedback] = useState('');
@@ -49,11 +52,13 @@ const Game = () => {
     const [score, setScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
 
+    // Sample leaderboard data
     const leaderboard = [
         { name: "Jalina", score: 500, date: "2024-12-20" },
         { name: "Naika", score: 500, date: "2024-11-19" }
     ];
 
+    // Initialize game on component mount
     useEffect(() => {
         const id = Date.now().toString();
         setSessionId(id);
@@ -66,6 +71,7 @@ const Game = () => {
             });
     }, []);
 
+    // Handle guess submission
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!guess) return;
@@ -87,6 +93,7 @@ const Game = () => {
         setGuess('');
     };
 
+    // Reset game for another round
     const handlePlayAgain = () => {
         resetGame(sessionId)
             .then(() => {
@@ -101,6 +108,7 @@ const Game = () => {
             });
     };
 
+    // Play sound based on feedback type
     const playSound = (type) => {
         const sound = type === 'success' ? new Audio(successSound) : new Audio(errorSound);
         sound.play().catch(error => {
@@ -110,7 +118,9 @@ const Game = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-16 px-4">
+            {/* Main game grid */}
             <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-8">
+                {/* Game section (2 columns) */}
                 <div className="md:col-span-2">
                     <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
                         <div className="flex items-center space-x-3 mb-8">
@@ -184,38 +194,49 @@ const Game = () => {
                     </div>
                 </div>
 
-                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 h-fit">
-                    <div className="flex items-center space-x-3 mb-6">
-                        <Trophy className="w-6 h-6 text-yellow-500" />
-                        <h3 className="text-xl font-bold text-white">Top Players</h3>
-                    </div>
-                    <div className="space-y-4">
-                        {leaderboard.map((player, index) => (
-                            <div 
-                                key={index}
-                                className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 transition-all hover:border-blue-500/50"
-                            >
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-lg font-semibold text-white">
-                                        {player.name}
-                                    </span>
-                                    <span className="text-blue-400 font-bold">
-                                        {player.score}
-                                    </span>
+                {/* Right sidebar (1 column) with Support and Leaderboard */}
+                <div className="space-y-6">
+                    {/* Support component */}
+                    <Support />
+                    
+                    {/* Leaderboard component */}
+                    <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
+                        <div className="flex items-center space-x-3 mb-6">
+                            <Trophy className="w-6 h-6 text-yellow-500" />
+                            <h3 className="text-xl font-bold text-white">Top Players</h3>
+                        </div>
+                        <div className="space-y-4">
+                            {leaderboard.map((player, index) => (
+                                <div 
+                                    key={index}
+                                    className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 transition-all hover:border-blue-500/50"
+                                >
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-lg font-semibold text-white">
+                                            {player.name}
+                                        </span>
+                                        <span className="text-blue-400 font-bold">
+                                            {player.score}
+                                        </span>
+                                    </div>
+                                    <div className="text-sm text-gray-400">
+                                        {new Date(player.date).toLocaleDateString()}
+                                    </div>
                                 </div>
-                                <div className="text-sm text-gray-400">
-                                    {new Date(player.date).toLocaleDateString()}
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
+            
+            {/* Game Over Section */}
             {gameOver && (
-                <ShareGameResult 
-                    score={score} 
-                    attempts={attempts}
-                />
+                <div className="mt-8">
+                    <ShareGameResult 
+                        score={score} 
+                        attempts={attempts}
+                    />
+                </div>
             )}
         </div>
     );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {useNavigate} from 'react-router-dom';
 import { Target, User, Lock, Mail } from 'lucide-react';
+import { login, register } from '../services/api';
 
 const Login = () => {
     const navigate = useNavigate(); // Use this to redirect to another page
@@ -14,30 +15,40 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const endpoint = isLogin ? '/api/login' : '/api/register';
+        console.log('Form submitted:', formData);
         
         try {
-            const response = await fetch(`http://localhost:5000${endpoint}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            });
+            let response;
+            if (isLogin) {
+                console.log('Attempting login...');
+                response = await login({
+                    username: formData.username,
+                    password: formData.password
+                });
+                console.log('Login response:', response);
 
-            const data = await response.json();
-            
-            if (response.ok) {
-                // 3) Store user info in localStorage or context
-                localStorage.setItem('user', JSON.stringify(data));
-
-                // 4) Navigate to /game
+                //store user data in local storage and redirect to game page
+                localStorage.setItem('user', JSON.stringify(response.data));
                 navigate('/game');
             } else {
-                setError(data.error || 'An error occurred');
+                console.log('Attempting registration...');
+                response = await register({
+                    username: formData.username,
+                    email: formData.email,
+                    password: formData.password
+                });
+                console.log('Register response:', response);
+
+                //store user data in local storage and redirect to game page
+                localStorage.setItem('user', JSON.stringify(response.data));
+                navigate('/game');
             }
         } catch (err) {
-            setError('Failed to connect to server');
+            console.error('Detailed error:', {
+                message: err.message,
+                response: err.response?.data,
+                status: err.response?.status
+            });
         }
     };
 

@@ -4,6 +4,7 @@ import successSound from '../assets/success.mp3';
 import errorSound from '../assets/error.mp3';
 import { Target, RefreshCw, Send, Trophy } from 'lucide-react';
 import { toPng } from 'html-to-image';
+import Support from './Support';
 
 const ShareGameResult = ({ score, attempts }) => {
     const handleShare = () => {
@@ -56,7 +57,6 @@ const Game = () => {
         }
     }, []);
 
-    // Fetch leaderboard and start a new game when the component mounts
     useEffect(() => {
         const id = Date.now().toString();
         setSessionId(id);
@@ -114,108 +114,128 @@ const Game = () => {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="mb-6 text-center">
-                {currentUser ? (
-                    <p className="text-lg text-blue-400">Welcome back, {currentUser.username}!</p>
-                ) : (
-                    <p className="text-gray-400">Please log in to save your score</p>
-                )}
-            </div>
-
-            <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
-                {/* Game Section */}
-                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center space-x-2">
-                            <Target className="w-6 h-6 text-blue-500" />
-                            <h2 className="text-xl font-bold text-white">Number Ninja</h2>
-                        </div>
-                        <button 
-                            onClick={handleReset}
-                            className="p-2 text-gray-400 hover:text-white transition-colors"
-                        >
-                            <RefreshCw className="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    <div className="space-y-4 mb-6">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Attempts: {attempts}/{maxAttempts}</span>
-                            <span className="text-blue-400">Score: {score}</span>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <input
-                                type="number"
-                                value={guess}
-                                onChange={(e) => setGuess(e.target.value)}
-                                placeholder="Enter your guess (1-1000)"
-                                className="w-full bg-gray-900/50 border border-gray-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                                min="1"
-                                max="1000"
-                                required
-                            />
-                            <button 
-                                type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                            >
-                                <Send className="w-5 h-5" />
-                                <span>Submit Guess</span>
-                            </button>
-                        </form>
-
-                        {feedback && (
-                            <div className={`p-4 rounded-lg ${
-                                feedbackType === 'success' ? 'bg-green-600/20 text-green-400' :
-                                feedbackType === 'error' ? 'bg-red-600/20 text-red-400' :
-                                'bg-yellow-600/20 text-yellow-400'
-                            }`}>
-                                {feedback}
-                            </div>
-                        )}
-                    </div>
+        <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
+            <div className="container mx-auto px-4 py-8 flex-grow">
+                <div className="mb-6 text-center">
+                    {currentUser ? (
+                        <p className="text-lg text-blue-400">Welcome back, {currentUser.username}!</p>
+                    ) : (
+                        <p className="text-gray-400">Please log in to save your score</p>
+                    )}
                 </div>
 
-                {/* Leaderboard Section */}
-                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
-                    <div className="flex items-center space-x-2 mb-6">
-                        <Trophy className="w-6 h-6 text-blue-500" />
-                        <h2 className="text-xl font-bold text-white">Leaderboard</h2>
+                <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+                    {/* Game Section */}
+                    <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center space-x-2">
+                                <Target className="w-6 h-6 text-blue-500" />
+                                <h2 className="text-xl font-bold text-white">Number Ninja</h2>
+                            </div>
+                            <button 
+                                onClick={handleReset}
+                                className="p-2 text-gray-400 hover:text-white transition-colors"
+                            >
+                                <RefreshCw className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-400">Attempts: {attempts}/{maxAttempts}</span>
+                                <span className="text-blue-400">Score: {score}</span>
+                            </div>
+
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <input
+                                    type="number"
+                                    value={guess}
+                                    onChange={(e) => setGuess(e.target.value)}
+                                    placeholder="Enter your guess (1-1000)"
+                                    className="w-full bg-gray-900/50 border border-gray-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                                    min="1"
+                                    max="1000"
+                                    required
+                                />
+                                <button 
+                                    type="submit"
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                                >
+                                    <Send className="w-5 h-5" />
+                                    <span>Submit Guess</span>
+                                </button>
+                            </form>
+
+                            {feedback && (
+                                <div className={`p-4 rounded-lg ${
+                                    feedbackType === 'success' ? 'bg-green-600/20 text-green-400' :
+                                    feedbackType === 'error' ? 'bg-red-600/20 text-red-400' :
+                                    'bg-yellow-600/20 text-yellow-400'
+                                }`}>
+                                    {feedback}
+                                </div>
+                            )}
+
+                            {/* Game Instructions */}
+                            <div className="mt-8 pt-6 border-t border-gray-700">
+                                <h3 className="text-lg font-semibold text-white mb-2">How to Play:</h3>
+                                <ul className="text-gray-400 space-y-2">
+                                    <li>• Enter a number between 1 and 1000</li>
+                                    <li>• You have {maxAttempts} attempts to guess correctly</li>
+                                    <li>• Watch for hints after each guess</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="space-y-4">
-                        {leaderboard.map((player, index) => (
-                            <div 
-                                key={index}
-                                className="flex items-center justify-between p-4 bg-gray-900/50 rounded-lg"
-                            >
-                                <div className="flex items-center space-x-4">
-                                    <span className="text-2xl font-bold text-blue-400">
-                                        #{index + 1}
-                                    </span>
-                                    <div>
-                                        <div className="font-medium text-white">
-                                            {player.username}
+                    {/* Right Column - Support and Leaderboard */}
+                    <div className="space-y-6">
+                        {/* Support Component */}
+                        <Support />
+                        
+                        {/* Leaderboard Section */}
+                        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
+                            <div className="flex items-center space-x-2 mb-6">
+                                <Trophy className="w-6 h-6 text-blue-500" />
+                                <h2 className="text-xl font-bold text-white">Leaderboard</h2>
+                            </div>
+
+                            <div className="space-y-4">
+                                {leaderboard.map((player, index) => (
+                                    <div 
+                                        key={index}
+                                        className="flex items-center justify-between p-4 bg-gray-900/50 rounded-lg"
+                                    >
+                                        <div className="flex items-center space-x-4">
+                                            <span className="text-2xl font-bold text-blue-400">
+                                                #{index + 1}
+                                            </span>
+                                            <div>
+                                                <div className="font-medium text-white">
+                                                    {player.username}
+                                                </div>
+                                                <div className="text-sm text-gray-400">
+                                                    Score: {player.score} • Attempts: {player.attempts}
+                                                </div>
+                                            </div>
                                         </div>
                                         <div className="text-sm text-gray-400">
-                                            Score: {player.score} • Attempts: {player.attempts}
+                                            {new Date(player.date).toLocaleDateString()}
                                         </div>
                                     </div>
-                                </div>
-                                <div className="text-sm text-gray-400">
-                                    {new Date(player.date).toLocaleDateString()}
-                                </div>
+                                ))}
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
             </div>
             {gameOver && (
-                <ShareGameResult 
-                    score={score} 
-                    attempts={attempts}
-                />
+                <div className="container mx-auto px-4 pb-8">
+                    <ShareGameResult 
+                        score={score} 
+                        attempts={attempts}
+                    />
+                </div>
             )}
         </div>
     );

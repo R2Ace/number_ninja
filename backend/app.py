@@ -6,6 +6,8 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from config import Config
 from flask_migrate import Migrate
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 # Configure CORS to allow requests from http://localhost:3000 to /api/*
@@ -59,6 +61,14 @@ class Score(db.Model):
 game_state = {}
 MAX_ATTEMPTS = 5
 
+# Initialize rate limiter
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
+
 
 # API routes
 
@@ -86,54 +96,74 @@ def start_game():
     }
     return jsonify({'message': 'Game started.'}), 200
 
-# Route to make a guess
+# Update the make_guess function with rate limiting and enhanced validation
 @app.route('/api/guess', methods=['POST'])
+@limiter.limit("10 per minute")  # Rate limit: 10 guesses per minute
 def make_guess():
-    session_id = request.json.get('session_id')
-    user_guess = request.json.get('guess')
+    try:
+        session_id = request.json.get('session_id')
+        user_guess = request.json.get('guess')
 
-    if not session_id or user_guess is None:
-        return jsonify({'error': 'Session ID and guess are required.'}), 400
+        if not session_id or user_guess is None:
+            return jsonify({'error': 'Session ID and guess are required.'}), 400
 
-    state = game_state.get(session_id)
-    if not state:
-        return jsonify({'error': 'Game not started. Please start a new game.'}), 400
+        # Get game state
+        state = game_state.get(session_id)
+        if not state:
+            return jsonify({'error': 'Game not started. Please start a new game.'}), 400
 
-    state['attempts'] += 1
+        # Verify this isn't too many attempts
+        if state['attempts'] >= MAX_ATTEMPTS:
+            return jsonify({'error': 'Maximum attempts reached.'}), 400
 
-    if user_guess < state['random_number']:
-        feedback = "Too low!"
-        feedback_type = 'error'
-    elif user_guess > state['random_number']:
-        feedback = "Too high!"
-        feedback_type = 'error'
-    else:
-        feedback = "Congratulations! You've guessed the correct number!"
-        feedback_type = 'success'
-        state['score'] += (MAX_ATTEMPTS - state['attempts'] + 1)
-        # Optionally, reset the game or keep the state for high scores
+        # Verify the guess is within valid range
+        if not (1 <= user_guess <= 1000):
+            return jsonify({'error': 'Guess must be between 1 and 1000.'}), 400
+
+        # Increment attempts
+        state['attempts'] += 1
+        
+        # Record this guess to prevent duplicates
+        state.setdefault('previous_guesses', []).append(user_guess)
+        
+        # Check if winning
+        if user_guess == state['random_number']:
+            # Calculate score based on attempts - verify it's correct
+            calculated_score = MAX_ATTEMPTS - state['attempts'] + 1
+            state['score'] = calculated_score
+            
+            return jsonify({
+                'feedback': "Congratulations! You've guessed the correct number!",
+                'feedback_type': 'success',
+                'score': calculated_score,
+                'game_over': True
+            }), 200
+        
+        # Check if too many attempts
+        if state['attempts'] >= MAX_ATTEMPTS:
+            return jsonify({
+                'feedback': f"Game over! The correct number was {state['random_number']}.",
+                'feedback_type': 'danger',
+                'game_over': True
+            }), 200
+        
+        # Provide hint
+        if user_guess < state['random_number']:
+            feedback = "Too low!"
+            feedback_type = 'error'
+        else:
+            feedback = "Too high!"
+            feedback_type = 'error'
+
         return jsonify({
             'feedback': feedback,
             'feedback_type': feedback_type,
-            'score': state['score'],
-            'game_over': True
+            'attempts': state['attempts'],
+            'max_attempts': MAX_ATTEMPTS
         }), 200
-
-    if state['attempts'] >= MAX_ATTEMPTS:
-        feedback = f"Game over! The correct number was {state['random_number']}."
-        feedback_type = 'danger'
-        return jsonify({
-            'feedback': feedback,
-            'feedback_type': feedback_type,
-            'game_over': True
-        }), 200
-
-    return jsonify({
-        'feedback': feedback,
-        'feedback_type': feedback_type,
-        'attempts': state['attempts'],
-        'max_attempts': MAX_ATTEMPTS
-    }), 200
+    except Exception as e:
+        print(f"Error processing guess: {str(e)}")
+        return jsonify({'error': 'An error occurred processing your guess.'}), 500
 
 # Route to reset the game
 @app.route('/api/reset', methods=['POST'])

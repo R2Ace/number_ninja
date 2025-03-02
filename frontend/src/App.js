@@ -9,6 +9,9 @@ import Login from './components/Login';
 import LearnMore from './components/LearnMore';
 import './App.css'; // Import global styles
 import GameHistory from './components/GameHistory';
+import PasswordReset from './components/PasswordReset';
+import PasswordResetRequest from './components/PasswordResetRequest';
+import LaunchPage from './components/LaunchPage';
 
 function App() {
     return (
@@ -21,6 +24,9 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/learn" element={<LearnMore />} />
                     <Route path="/history" element={<GameHistory />} />
+                    <Route path="/forgot-password" element={<PasswordResetRequest />} />
+                    <Route path="/reset-password" element={<PasswordReset />} />
+                    <Route path="/launch" element={<LaunchPage />} />
                 </Routes>
                 <Footer />
             </div>
@@ -29,4 +35,3 @@ function App() {
 }
 
 export default App;
-

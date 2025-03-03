@@ -20,9 +20,11 @@ CORS(app,
             "https://numberninja-red.vercel.app",
             "https://numberninja-rho.vercel.app",
             "https://numberninja-*.vercel.app",
+            "https://numbersninjas.com",
+            "https://www.numbersninjas.com"
         ],
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"],
+        "allow_headers": ["Content-Type", "Authorization"],  # Added Authorization for JWT
         "supports_credentials": True
     }}
 )

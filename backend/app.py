@@ -8,6 +8,8 @@ from config import Config
 from flask_migrate import Migrate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from datetime import date
+import hashlib
 
 app = Flask(__name__)
 # Configure CORS to allow requests from http://localhost:3000 to /api/*
@@ -57,6 +59,16 @@ class Score(db.Model):
     attempts_used = db.Column(db.Integer, nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+# Database models
+class DailyChallenge(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    score = db.Column(db.Integer, nullable=False)
+    attempts_used = db.Column(db.Integer, nullable=False)
+    challenge_date = db.Column(db.Date, nullable=False)
+    
+    __table_args__ = (db.UniqueConstraint('user_id', 'challenge_date'),)
 
 
 # Game state (for simplicity, using in-memory storage; consider using a database for scalability)
@@ -360,6 +372,109 @@ def get_user_history():
         print(f"Error fetching game history: {str(e)}")
         return jsonify({'error': 'Failed to fetch game history'}), 500
     
+
+# Daily challenge generation
+@app.route('/api/daily-challenge/start', methods=['POST'])
+def start_daily_challenge():
+    try:
+        user_id = request.json.get('user_id')
+        
+        # Generate a consistent number based on date
+        today = date.today().strftime('%Y%m%d')
+        seed = int(hashlib.md5(today.encode()).hexdigest(), 16) % 10000
+        random.seed(seed)
+        daily_number = random.randint(1, 1000)
+        random.seed()  # Reset the seed
+        
+        session_id = f"daily_{today}_{user_id if user_id else 'guest'}"
+        
+        # Check if user already completed today's challenge
+        if user_id:
+            existing_score = DailyChallenge.query.filter_by( 
+                user_id=user_id, 
+                challenge_date=date.today()
+            ).first()
+            
+            if existing_score:
+                return jsonify({
+                    'error': 'You have already completed today\'s challenge',
+                    'score': existing_score.score,
+                    'attempts': existing_score.attempts_used
+                }), 400
+        
+        # Create game state
+        game_state[session_id] = {
+            'random_number': daily_number,
+            'attempts': 0,
+            'score': 0,
+            'is_daily': True
+        }
+        
+        return jsonify({
+            'message': 'Daily challenge started',
+            'session_id': session_id
+        }), 200
+    except Exception as e:
+        print(f"Error starting daily challenge: {str(e)}")
+        return jsonify({'error': 'Failed to start daily challenge'}), 500
+
+# Save daily challenge score
+@app.route('/api/daily-challenge/save', methods=['POST'])
+def save_daily_challenge():
+    try:
+        data = request.json
+        print("Daily challenge save data:", data)  # Debug log
+        
+        user_id = data.get('user_id')
+        session_id = data.get('session_id')
+        
+        if not user_id or not session_id:
+            return jsonify({'error': 'User ID and session ID are required'}), 400
+            
+        state = game_state.get(session_id)
+        print("Game state:", state)  # Debug log
+        
+        if not state or not state.get('is_daily'):
+            return jsonify({'error': 'Invalid session or not a daily challenge'}), 400
+            
+        # Create or update daily challenge record
+        new_challenge = DailyChallenge(
+            user_id=user_id,
+            score=state['score'],
+            attempts_used=state['attempts'],
+            challenge_date=date.today()
+        )
+        
+        db.session.add(new_challenge)
+        db.session.commit()
+        print("Daily challenge score saved successfully")  # Debug log
+        
+        return jsonify({'message': 'Daily challenge score saved'}), 201
+    except Exception as e:
+        print(f"Error saving daily challenge: {str(e)}")  # Error log
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Get daily leaderboard
+@app.route('/api/daily-challenge/leaderboard', methods=['GET'])
+def get_daily_leaderboard():
+    today = date.today()
+    
+    top_scores = DailyChallenge.query \
+        .filter_by(challenge_date=today) \
+        .join(User) \
+        .order_by(DailyChallenge.score.desc()) \
+        .limit(10) \
+        .all()
+        
+    leaderboard = [{
+        'username': item.user.username,
+        'score': item.score,
+        'attempts': item.attempts_used,
+        'date': item.challenge_date.strftime('%Y-%m-%d')
+    } for item in top_scores]
+    
+    return jsonify(leaderboard), 200
 
 
 

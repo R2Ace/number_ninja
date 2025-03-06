@@ -12,6 +12,7 @@ import GameHistory from './components/GameHistory';
 import PasswordReset from './components/PasswordReset';
 import PasswordResetRequest from './components/PasswordResetRequest';
 import LaunchPage from './components/LaunchPage';
+import DailyChallenge from './components/DailyChallenge';
 
 function App() {
     return (
@@ -27,6 +28,7 @@ function App() {
                     <Route path="/forgot-password" element={<PasswordResetRequest />} />
                     <Route path="/reset-password" element={<PasswordReset />} />
                     <Route path="/launch" element={<LaunchPage />} />
+                    <Route path="/daily" element={<DailyChallenge />} />
                 </Routes>
                 <Footer />
             </div>

@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { startGame, makeGuess, resetGame, fetchLeaderboard } from '../services/api';
 import successSound from '../assets/success.mp3';
 import errorSound from '../assets/error.mp3';
-import { Target, RefreshCw, Send, Trophy } from 'lucide-react';
+import { Target, RefreshCw, Send, Trophy, Calendar, Star } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import Support from './Support';
+import { Link } from 'react-router-dom';
 
 const ShareGameResult = ({ score, attempts }) => {
     const handleShare = () => {
@@ -15,6 +16,15 @@ const ShareGameResult = ({ score, attempts }) => {
                 link.href = dataUrl;
                 link.download = 'number-ninja-result.png';
                 link.click();
+                
+                // Track sharing event
+                if (window.gtag) {
+                    window.gtag('event', 'share_result', {
+                        'event_category': 'engagement',
+                        'event_label': 'image_download',
+                        'value': score
+                    });
+                }
             })
             .catch((err) => {
                 console.error('Error generating image:', err);
@@ -49,6 +59,7 @@ const Game = () => {
     const [score, setScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
     const [leaderboard, setLeaderboard] = useState([]);
+    const [currentDate] = useState(new Date().toLocaleDateString());
 
     useEffect(() => {
         const savedUser = localStorage.getItem('user');
@@ -60,7 +71,15 @@ const Game = () => {
     useEffect(() => {
         const id = Date.now().toString();
         setSessionId(id);
-        startGame(id);
+        startGame(id).then(() => {
+            // Track game start event
+            if (window.gtag) {
+                window.gtag('event', 'game_start', {
+                    'event_category': 'gameplay',
+                    'event_label': currentUser ? 'logged_in' : 'guest'
+                });
+            }
+        });
 
         fetchLeaderboard()
             .then(response => {
@@ -75,6 +94,15 @@ const Game = () => {
         e.preventDefault();
         if (!guess) return;
 
+        // Track guess submission
+        if (window.gtag) {
+            window.gtag('event', 'submit_guess', {
+                'event_category': 'gameplay',
+                'event_label': `attempt_${attempts + 1}`,
+                'value': parseInt(guess)
+            });
+        }
+
         makeGuess(sessionId, parseInt(guess))
             .then(response => {
                 const data = response.data;
@@ -83,7 +111,20 @@ const Game = () => {
                 if (data.attempts) setAttempts(data.attempts);
                 if (data.max_attempts) setMaxAttempts(data.max_attempts);
                 if (data.score) setScore(data.score);
-                if (data.game_over) setGameOver(true);
+                
+                if (data.game_over) {
+                    setGameOver(true);
+                    
+                    // Track game completion
+                    if (window.gtag) {
+                        window.gtag('event', 'game_complete', {
+                            'event_category': 'gameplay',
+                            'event_label': data.feedback_type === 'success' ? 'win' : 'lose',
+                            'value': data.score || 0
+                        });
+                    }
+                }
+                
                 playSound(data.feedback_type);
             })
             .catch(error => {
@@ -95,6 +136,15 @@ const Game = () => {
     };
 
     const handleReset = () => {
+        // Track game reset
+        if (window.gtag) {
+            window.gtag('event', 'game_reset', {
+                'event_category': 'gameplay',
+                'event_label': gameOver ? 'after_completion' : 'during_game',
+                'value': attempts
+            });
+        }
+        
         resetGame(sessionId).then(() => {
             setGuess('');
             setFeedback('');
@@ -122,6 +172,33 @@ const Game = () => {
                     ) : (
                         <p className="text-gray-400">Please log in to save your score</p>
                     )}
+                </div>
+
+                {/* Daily Challenge Banner */}
+                <div className="max-w-4xl mx-auto mb-6">
+                    <div className="bg-gradient-to-r from-indigo-800 to-purple-800 rounded-xl p-4 shadow-lg relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/20 rounded-full -mr-8 -mt-8 blur-2xl"></div>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                                <div className="bg-yellow-500/20 p-3 rounded-lg">
+                                    <Calendar className="w-8 h-8 text-yellow-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-white font-bold text-lg">Daily Challenge</h3>
+                                    <p className="text-gray-300 text-sm">{currentDate}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center">
+                                <Star className="w-5 h-5 text-yellow-400 mr-1" />
+                                <Link 
+                                    to="/daily" 
+                                    className="bg-white text-indigo-900 hover:bg-yellow-100 font-bold py-2 px-4 rounded-lg shadow transition-colors"
+                                >
+                                    Play Today's Challenge
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">

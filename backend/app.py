@@ -59,6 +59,8 @@ class Score(db.Model):
     attempts_used = db.Column(db.Integer, nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    difficulty = db.Column(db.String(20), default='ninja') 
+    max_number = db.Column(db.Integer, default=1000)    
 
 # Database models
 class DailyChallenge(db.Model):
@@ -100,15 +102,33 @@ def home():
 def start_game():
     print("Received request to /api/start")
     session_id = request.json.get('session_id')
+    
+    # Get difficulty settings
+    max_number = request.json.get('max_number', 1000)
+    max_attempts = request.json.get('max_attempts', 5)
+    difficulty = request.json.get('difficulty', 'ninja')
+    
     if not session_id:
         return jsonify({'error': 'Session ID is required.'}), 400
 
+    # Generate random number based on the max_number
+    random_number = random.randint(1, max_number)
+    
     game_state[session_id] = {
-        'random_number': random.randint(1, 1000),
+        'random_number': random_number,
         'attempts': 0,
-        'score': 0
+        'score': 0,
+        'max_attempts': max_attempts,
+        'difficulty': difficulty,
+        'max_number': max_number
     }
-    return jsonify({'message': 'Game started.'}), 200
+    
+    return jsonify({
+        'message': 'Game started.',
+        'difficulty': difficulty,
+        'max_attempts': max_attempts,
+        'max_number': max_number
+    }), 200
 
 # Update the make_guess function with rate limiting and enhanced validation
 @app.route('/api/guess', methods=['POST'])
@@ -126,13 +146,17 @@ def make_guess():
         if not state:
             return jsonify({'error': 'Game not started. Please start a new game.'}), 400
 
+        # Get max attempts from state
+        max_attempts = state.get('max_attempts', MAX_ATTEMPTS)
+        
         # Verify this isn't too many attempts
-        if state['attempts'] >= MAX_ATTEMPTS:
+        if state['attempts'] >= max_attempts:
             return jsonify({'error': 'Maximum attempts reached.'}), 400
 
         # Verify the guess is within valid range
-        if not (1 <= user_guess <= 1000):
-            return jsonify({'error': 'Guess must be between 1 and 1000.'}), 400
+        max_number = state.get('max_number', 1000)
+        if not (1 <= user_guess <= max_number):
+            return jsonify({'error': f'Guess must be between 1 and {max_number}.'}), 400
 
         # Increment attempts
         state['attempts'] += 1
@@ -142,8 +166,17 @@ def make_guess():
         
         # Check if winning
         if user_guess == state['random_number']:
-            # Calculate score based on attempts - verify it's correct
-            calculated_score = MAX_ATTEMPTS - state['attempts'] + 1
+            # Calculate score based on attempts and difficulty
+            difficulty_multiplier = {
+                'rookie': 1,
+                'ninja': 2,
+                'master': 3,
+                'grandmaster': 4,
+                'legendary': 5
+            }.get(state.get('difficulty', 'ninja'), 2)
+            
+            # Base score calculation
+            calculated_score = (max_attempts - state['attempts'] + 1) * difficulty_multiplier
             state['score'] = calculated_score
             
             return jsonify({
@@ -154,7 +187,7 @@ def make_guess():
             }), 200
         
         # Check if too many attempts
-        if state['attempts'] >= MAX_ATTEMPTS:
+        if state['attempts'] >= max_attempts:
             return jsonify({
                 'feedback': f"Game over! The correct number was {state['random_number']}.",
                 'feedback_type': 'danger',
@@ -173,7 +206,7 @@ def make_guess():
             'feedback': feedback,
             'feedback_type': feedback_type,
             'attempts': state['attempts'],
-            'max_attempts': MAX_ATTEMPTS
+            'max_attempts': max_attempts
         }), 200
     except Exception as e:
         print(f"Error processing guess: {str(e)}")
@@ -265,7 +298,9 @@ def save_score():
     new_score = Score(
         score=data['score'],
         attempts_used=data['attempts'],
-        user_id=data['user_id']
+        user_id=data['user_id'],
+        difficulty=data.get('difficulty', 'ninja'),
+        max_number=data.get('max_number', 1000)
     )
     db.session.add(new_score)
     db.session.commit()
@@ -274,20 +309,25 @@ def save_score():
 # Route to get the leaderboard
 @app.route('/api/leaderboard', methods=['GET'])
 def get_leaderboard():
-    top_scores = Score.query \
-    .join(User) \
-    .order_by(Score.score.desc()) \
-    .limit(10) \
-    .all()
+    difficulty = request.args.get('difficulty')
+    
+    query = Score.query.join(User)
+    
+    # Filter by difficulty if provided
+    if difficulty:
+        query = query.filter(Score.difficulty == difficulty)
+    
+    top_scores = query.order_by(Score.score.desc()).limit(10).all()
 
     leaderboard = [{
-    'username': item.user.username,
-    'score': item.score,
-    'attempts': item.attempts_used,
-    'date': item.date.strftime('%Y-%m-%d')
-} for item in top_scores]
+        'username': item.user.username,
+        'score': item.score,
+        'attempts': item.attempts_used,
+        'date': item.date.strftime('%Y-%m-%d'),
+        'difficulty': item.difficulty
+    } for item in top_scores]
 
-    return jsonify(leaderboard)
+    return jsonify(leaderboard), 200
 
 #Seeding the database with some test data
 @app.route('/api/seed', methods=['GET'])

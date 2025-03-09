@@ -13,6 +13,9 @@ import PasswordReset from './components/PasswordReset';
 import PasswordResetRequest from './components/PasswordResetRequest';
 import LaunchPage from './components/LaunchPage';
 import DailyChallenge from './components/DailyChallenge';
+import ThemeSettings from './components/ThemeSettings';
+import { ThemeProvider } from './context/ThemeContext';
+import Support from './components/Support';
 
 function App() {
     return (
@@ -29,6 +32,7 @@ function App() {
                     <Route path="/reset-password" element={<PasswordReset />} />
                     <Route path="/launch" element={<LaunchPage />} />
                     <Route path="/daily" element={<DailyChallenge />} />
+                    <Route path="/themes" element={<ThemeSettings />} />
                 </Routes>
                 <Footer />
             </div>

@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { startGame, makeGuess, resetGame, fetchLeaderboard } from '../services/api';
 import successSound from '../assets/success.mp3';
 import errorSound from '../assets/error.mp3';
-import { Target, RefreshCw, Send, Trophy, Calendar, Star } from 'lucide-react';
+import { Target, RefreshCw, Send, Trophy, Calendar, Star, Settings } from 'lucide-react';
 import { toPng } from 'html-to-image';
-import Support from './Support';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
+import DifficultySelector, { difficultyLevels } from './DifficultySelector';
 
-const ShareGameResult = ({ score, attempts }) => {
+const ShareGameResult = ({ score, attempts, difficulty }) => {
+    const { currentTheme } = useTheme();
+    
     const handleShare = () => {
         const node = document.getElementById('share-content');
         toPng(node)
@@ -32,15 +35,16 @@ const ShareGameResult = ({ score, attempts }) => {
     };
 
     return (
-        <div id="share-content" className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 text-center">
+        <div id="share-content" className={`${currentTheme.cardBg} backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 text-center`}>
             <h3 className="text-2xl font-bold text-white mb-4">Great Game!</h3>
-            <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 rounded-lg mb-6">
-                <p className="text-blue-400 text-lg">Score: {score}</p>
+            <div className={`bg-gradient-to-r from-gray-900 to-${currentTheme.primary}-900/30 p-6 rounded-lg mb-6`}>
+                <p className={`text-${currentTheme.primary}-400 text-lg`}>Score: {score}</p>
                 <p className="text-gray-400">Solved in {attempts} attempts</p>
+                <p className="text-gray-400 mt-2">Difficulty: {difficultyLevels[difficulty].name}</p>
             </div>
             <button 
                 onClick={handleShare}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg text-white font-medium hover:from-purple-700 hover:to-pink-700 transition-all"
+                className={`inline-flex items-center px-6 py-3 bg-gradient-to-r from-${currentTheme.primary}-600 to-${currentTheme.secondary}-600 rounded-lg text-white font-medium hover:from-${currentTheme.primary}-700 hover:to-${currentTheme.secondary}-700 transition-all`}
             >
                 Save Image to Share
             </button>
@@ -49,6 +53,7 @@ const ShareGameResult = ({ score, attempts }) => {
 };
 
 const Game = () => {
+    const { currentTheme } = useTheme();
     const [currentUser, setCurrentUser] = useState(null);
     const [sessionId, setSessionId] = useState(null);
     const [guess, setGuess] = useState('');
@@ -60,27 +65,38 @@ const Game = () => {
     const [gameOver, setGameOver] = useState(false);
     const [leaderboard, setLeaderboard] = useState([]);
     const [currentDate] = useState(new Date().toLocaleDateString());
+    const [showDifficultySelector, setShowDifficultySelector] = useState(false);
+    const [difficulty, setDifficulty] = useState('ninja'); // Default difficulty
+    const [maxNumber, setMaxNumber] = useState(1000); // Default max number
 
     useEffect(() => {
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
             setCurrentUser(JSON.parse(savedUser));
         }
+        
+        // Load saved difficulty preference
+        const savedDifficulty = localStorage.getItem('numberNinjaDifficulty');
+        if (savedDifficulty && difficultyLevels[savedDifficulty]) {
+            setDifficulty(savedDifficulty);
+            updateDifficultySettings(savedDifficulty);
+        }
     }, []);
 
-    useEffect(() => {
-        const id = Date.now().toString();
-        setSessionId(id);
-        startGame(id).then(() => {
-            // Track game start event
-            if (window.gtag) {
-                window.gtag('event', 'game_start', {
-                    'event_category': 'gameplay',
-                    'event_label': currentUser ? 'logged_in' : 'guest'
-                });
-            }
-        });
+    const updateDifficultySettings = (difficultyId) => {
+        const diffLevel = difficultyLevels[difficultyId];
+        setMaxAttempts(diffLevel.attempts);
+        
+        // Extract max number from range (format "1-1000" or "1-10000")
+        const range = diffLevel.range.split('-');
+        if (range.length === 2) {
+            setMaxNumber(parseInt(range[1]));
+        }
+    };
 
+    useEffect(() => {
+        startNewGame();
+        
         fetchLeaderboard()
             .then(response => {
                 setLeaderboard(response.data);
@@ -88,7 +104,33 @@ const Game = () => {
             .catch(error => {
                 console.error('Error fetching leaderboard:', error);
             });
-    }, []);
+    }, [difficulty]); // Restart game when difficulty changes
+
+    const startNewGame = () => {
+        const id = Date.now().toString();
+        setSessionId(id);
+        setAttempts(0);
+        setGameOver(false);
+        setScore(0);
+        setFeedback('');
+        setFeedbackType('');
+        
+        // Pass difficulty info to backend
+        startGame(id, { 
+            difficulty, 
+            maxNumber, 
+            maxAttempts: difficultyLevels[difficulty].attempts 
+        }).then(() => {
+            // Track game start event
+            if (window.gtag) {
+                window.gtag('event', 'game_start', {
+                    'event_category': 'gameplay',
+                    'event_label': difficulty,
+                    'value': maxNumber
+                });
+            }
+        });
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -109,7 +151,6 @@ const Game = () => {
                 setFeedback(data.feedback);
                 setFeedbackType(data.feedback_type);
                 if (data.attempts) setAttempts(data.attempts);
-                if (data.max_attempts) setMaxAttempts(data.max_attempts);
                 if (data.score) setScore(data.score);
                 
                 if (data.game_over) {
@@ -146,16 +187,15 @@ const Game = () => {
         }
         
         resetGame(sessionId).then(() => {
-            setGuess('');
-            setFeedback('');
-            setFeedbackType('');
-            setAttempts(0);
-            setGameOver(false);
-            setScore(0);
-            const newId = Date.now().toString();
-            setSessionId(newId);
-            startGame(newId);
+            startNewGame();
         });
+    };
+
+    const handleDifficultyChange = (difficultyId) => {
+        setDifficulty(difficultyId);
+        updateDifficultySettings(difficultyId);
+        localStorage.setItem('numberNinjaDifficulty', difficultyId);
+        setShowDifficultySelector(false);
     };
 
     const playSound = (type) => {
@@ -209,108 +249,141 @@ const Game = () => {
                                 <Target className="w-6 h-6 text-blue-500" />
                                 <h2 className="text-xl font-bold text-white">Number Ninja</h2>
                             </div>
-                            <button 
-                                onClick={handleReset}
-                                className="p-2 text-gray-400 hover:text-white transition-colors"
-                            >
-                                <RefreshCw className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-4 mb-6">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-400">Attempts: {attempts}/{maxAttempts}</span>
-                                <span className="text-blue-400">Score: {score}</span>
-                            </div>
-
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <input
-                                    type="number"
-                                    value={guess}
-                                    onChange={(e) => setGuess(e.target.value)}
-                                    placeholder="Enter your guess (1-1000)"
-                                    className="w-full bg-gray-900/50 border border-gray-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                                    min="1"
-                                    max="1000"
-                                    required
-                                />
+                            <div className="flex space-x-2">
                                 <button 
-                                    type="submit"
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                                    onClick={() => setShowDifficultySelector(!showDifficultySelector)}
+                                    className="p-2 text-yellow-400 hover:text-yellow-300 transition-colors"
+                                    title="Change Difficulty"
                                 >
-                                    <Send className="w-5 h-5" />
-                                    <span>Submit Guess</span>
+                                    <Settings className="w-5 h-5" />
                                 </button>
-                            </form>
-
-                            {feedback && (
-                                <div className={`p-4 rounded-lg ${
-                                    feedbackType === 'success' ? 'bg-green-600/20 text-green-400' :
-                                    feedbackType === 'error' ? 'bg-red-600/20 text-red-400' :
-                                    'bg-yellow-600/20 text-yellow-400'
-                                }`}>
-                                    {feedback}
-                                </div>
-                            )}
-
-                            {/* Game Instructions */}
-                            <div className="mt-8 pt-6 border-t border-gray-700">
-                                <h3 className="text-lg font-semibold text-white mb-2">How to Play:</h3>
-                                <ul className="text-gray-400 space-y-2">
-                                    <li>• Enter a number between 1 and 1000</li>
-                                    <li>• You have {maxAttempts} attempts to guess correctly</li>
-                                    <li>• Watch for hints after each guess</li>
-                                </ul>
+                                <button 
+                                    onClick={handleReset}
+                                    className="p-2 text-gray-400 hover:text-white transition-colors"
+                                    title="New Game"
+                                >
+                                    <RefreshCw className="w-5 h-5" />
+                                </button>
                             </div>
                         </div>
+
+                        {showDifficultySelector ? (
+                            <div className="mb-6">
+                                <DifficultySelector 
+                                    selectedDifficulty={difficulty} 
+                                    onSelectDifficulty={handleDifficultyChange}
+                                />
+                            </div>
+                        ) : (
+                            <div className="space-y-4 mb-6">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-400">
+                                        Difficulty: <span className={`text-${difficultyLevels[difficulty].color}-500`}>{difficultyLevels[difficulty].name}</span>
+                                    </span>
+                                    <span className="text-gray-400">Range: {difficultyLevels[difficulty].range}</span>
+                                </div>
+                                
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-400">Attempts: {attempts}/{maxAttempts}</span>
+                                    <span className="text-blue-400">Score: {score}</span>
+                                </div>
+
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <input
+                                        type="number"
+                                        value={guess}
+                                        onChange={(e) => setGuess(e.target.value)}
+                                        placeholder={`Enter your guess (1-${maxNumber})`}
+                                        className="w-full bg-gray-900/50 border border-gray-700/50 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                                        min="1"
+                                        max={maxNumber}
+                                        required
+                                    />
+                                    <button 
+                                        type="submit"
+                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                                    >
+                                        <Send className="w-5 h-5" />
+                                        <span>Submit Guess</span>
+                                    </button>
+                                </form>
+
+                                {feedback && (
+                                    <div className={`p-4 rounded-lg ${
+                                        feedbackType === 'success' ? 'bg-green-600/20 text-green-400' :
+                                        feedbackType === 'error' ? 'bg-red-600/20 text-red-400' :
+                                        'bg-yellow-600/20 text-yellow-400'
+                                    }`}>
+                                        {feedback}
+                                    </div>
+                                )}
+
+                                {/* Game Instructions */}
+                                <div className="mt-8 pt-6 border-t border-gray-700">
+                                    <h3 className="text-lg font-semibold text-white mb-2">How to Play:</h3>
+                                    <ul className="text-gray-400 space-y-2">
+                                        <li>• Enter a number between 1 and {maxNumber}</li>
+                                        <li>• You have {maxAttempts} attempts to guess correctly</li>
+                                        <li>• Watch for hints after each guess</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Right Column - Support and Leaderboard */}
-                    <div className="space-y-6">
-                        {/* Support Component */}
-                        <Support />
-                        
-                        {/* Leaderboard Section */}
-                        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
-                            <div className="flex items-center space-x-2 mb-6">
-                                <Trophy className="w-6 h-6 text-blue-500" />
-                                <h2 className="text-xl font-bold text-white">Leaderboard</h2>
-                            </div>
+                    {/* Right Column - Leaderboard */}
+                    <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
+                        <div className="flex items-center space-x-2 mb-6">
+                            <Trophy className="w-6 h-6 text-blue-500" />
+                            <h2 className="text-xl font-bold text-white">Leaderboard</h2>
+                        </div>
 
-                            <div className="space-y-4">
-                                {leaderboard.map((player, index) => (
-                                    <div 
-                                        key={index}
-                                        className="flex items-center justify-between p-4 bg-gray-900/50 rounded-lg"
-                                    >
-                                        <div className="flex items-center space-x-4">
-                                            <span className="text-2xl font-bold text-blue-400">
-                                                #{index + 1}
-                                            </span>
-                                            <div>
-                                                <div className="font-medium text-white">
-                                                    {player.username}
-                                                </div>
-                                                <div className="text-sm text-gray-400">
-                                                    Score: {player.score} • Attempts: {player.attempts}
-                                                </div>
+                        <div className="space-y-4">
+                            {leaderboard.map((player, index) => (
+                                <div 
+                                    key={index}
+                                    className="flex items-center justify-between p-4 bg-gray-900/50 rounded-lg"
+                                >
+                                    <div className="flex items-center space-x-4">
+                                        <span className="text-2xl font-bold text-blue-400">
+                                            #{index + 1}
+                                        </span>
+                                        <div>
+                                            <div className="font-medium text-white">
+                                                {player.username}
+                                            </div>
+                                            <div className="text-sm text-gray-400">
+                                                Score: {player.score} • Attempts: {player.attempts}
                                             </div>
                                         </div>
-                                        <div className="text-sm text-gray-400">
-                                            {new Date(player.date).toLocaleDateString()}
-                                        </div>
                                     </div>
-                                ))}
-                            </div>
+                                    <div className="text-sm text-gray-400">
+                                        {new Date(player.date).toLocaleDateString()}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        {/* Theme settings link */}
+                        <div className="mt-6 text-center">
+                            <Link 
+                                to="/themes" 
+                                className="text-blue-400 hover:text-blue-300 flex items-center justify-center"
+                            >
+                                <Settings className="w-4 h-4 mr-1" />
+                                <span>Customize Theme</span>
+                            </Link>
                         </div>
                     </div>
                 </div>
             </div>
+            
             {gameOver && (
                 <div className="container mx-auto px-4 pb-8">
                     <ShareGameResult 
                         score={score} 
                         attempts={attempts}
+                        difficulty={difficulty}
                     />
                 </div>
             )}

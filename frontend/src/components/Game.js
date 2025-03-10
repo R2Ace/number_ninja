@@ -114,12 +114,15 @@ const Game = () => {
         setScore(0);
         setFeedback('');
         setFeedbackType('');
+
+        //Get current difficulty settings
+        const diffSettings = difficultyLevels[difficulty];
         
         // Pass difficulty info to backend
         startGame(id, { 
             difficulty, 
             maxNumber, 
-            maxAttempts: difficultyLevels[difficulty].attempts 
+            maxAttempts: diffSettings.attempts
         }).then(() => {
             // Track game start event
             if (window.gtag) {

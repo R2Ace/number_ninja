@@ -4,11 +4,16 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
     ? 'https://number-ninja.onrender.com/api'
     : 'http://localhost:5000/api';
 
-export const startGame = (sessionId) => {
-    return axios.post(`${API_BASE_URL}/start`, { session_id: sessionId }, {
-        headers: { 'Content-Type': 'application/json' }
-    });
-};
+    export const startGame = (sessionId, difficultySettings = {}) => {
+        return axios.post(`${API_BASE_URL}/start`, { 
+            session_id: sessionId,
+            difficulty: difficultySettings.difficulty || 'ninja',
+            max_number: difficultySettings.maxNumber || 1000,
+            max_attempts: difficultySettings.maxAttempts || 5
+        }, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    };
 
 export const makeGuess = (sessionId, guess) => {
     return axios.post(`${API_BASE_URL}/guess`, { 

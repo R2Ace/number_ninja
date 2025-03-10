@@ -19,6 +19,8 @@ import Support from './components/Support';
 
 function App() {
     return (
+        <ThemeProvider>
+        {/* ThemeProvider wraps the entire application to provide theme context */}
         <Router>
             <div className="App">
                 <Banner />
@@ -37,6 +39,7 @@ function App() {
                 <Footer />
             </div>
         </Router>
+        </ThemeProvider>
     );
 }
 

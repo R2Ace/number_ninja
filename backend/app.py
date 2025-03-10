@@ -101,12 +101,13 @@ def home():
 @app.route('/api/start', methods=['POST'])
 def start_game():
     print("Received request to /api/start")
-    session_id = request.json.get('session_id')
+    data = request.json
+    session_id = data.get('session_id')
     
     # Get difficulty settings
-    max_number = request.json.get('max_number', 1000)
-    max_attempts = request.json.get('max_attempts', 5)
-    difficulty = request.json.get('difficulty', 'ninja')
+    max_number = data.get('max_number', 1000)
+    max_attempts = data.get('max_attempts', 5)
+    difficulty = data.get('difficulty', 'ninja')
     
     if not session_id:
         return jsonify({'error': 'Session ID is required.'}), 400

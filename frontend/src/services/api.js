@@ -5,24 +5,47 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
     : 'http://localhost:5000/api';
 
     export const startGame = (sessionId, difficultySettings = {}) => {
-        return axios.post(`${API_BASE_URL}/start`, { 
+        // Log what's being sent
+        console.log("API call - Starting game with:", {
+            session_id: sessionId,
+            ...difficultySettings
+        });
+        
+        // Make sure values are the right types
+        const payload = { 
             session_id: sessionId,
             difficulty: difficultySettings.difficulty || 'ninja',
-            max_number: difficultySettings.maxNumber || 1000,
-            max_attempts: difficultySettings.maxAttempts || 5
-        }, {
-            headers: { 'Content-Type': 'application/json' }
+            max_number: parseInt(difficultySettings.maxNumber) || 1000,
+            max_attempts: parseInt(difficultySettings.maxAttempts) || 5
+        };
+        
+        console.log("Sending payload:", payload);
+        
+        return axios.post(`${API_BASE_URL}/start`, payload, {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 10000 // Add timeout to prevent hanging requests
+        }).catch(error => {
+            console.error("Error in startGame API call:", error);
+            // Re-throw to allow component to handle
+            throw error;
         });
     };
 
+// Also update the makeGuess function with similar improvements
 export const makeGuess = (sessionId, guess) => {
+    console.log("API call - Making guess:", { session_id: sessionId, guess });
+    
     return axios.post(`${API_BASE_URL}/guess`, { 
         session_id: sessionId, 
         guess: parseInt(guess) 
     }, {
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000
+    }).catch(error => {
+        console.error("Error in makeGuess API call:", error);
+        throw error;
     });
-};
+}
 
 export const resetGame = (sessionId) => {
     return axios.post(`${API_BASE_URL}/reset`, { session_id: sessionId }, {

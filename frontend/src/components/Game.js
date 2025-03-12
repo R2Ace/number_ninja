@@ -55,7 +55,10 @@ const ShareGameResult = ({ score, attempts, difficulty }) => {
 const Game = () => {
     const { currentTheme } = useTheme();
     const [currentUser, setCurrentUser] = useState(null);
-    const [sessionId, setSessionId] = useState(null);
+    const [sessionId, setSessionId] = useState(() => {
+        // Generate a unique session ID on component mount
+        return `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      });
     const [guess, setGuess] = useState('');
     const [feedback, setFeedback] = useState('');
     const [feedbackType, setFeedbackType] = useState('');
@@ -80,23 +83,63 @@ const Game = () => {
         if (savedDifficulty && difficultyLevels[savedDifficulty]) {
             setDifficulty(savedDifficulty);
             updateDifficultySettings(savedDifficulty);
+        } else { 
+            // Set default difficulty settings
+            updateDifficultySettings('ninja');
         }
     }, []);
+    
+    // Start a new game when maxNumber and maxAttempts are set
+    useEffect(() => {
+        // Only start a new game if maxNumber and maxAttempts are set
+        // This prevents starting a game with invalid settings
+        if (maxNumber > 0 && maxAttempts > 0) {
+          console.log("Initial game settings ready, starting first game");
+          startNewGame();
+          
+          // Also fetch the leaderboard
+          fetchLeaderboard()
+            .then(response => {
+              setLeaderboard(response.data);
+            })
+            .catch(error => {
+              console.error('Error fetching leaderboard:', error);
+            });
+        }
+      }, [maxNumber, maxAttempts]); // Run when these are initially set
 
     const updateDifficultySettings = (difficultyId) => {
+        console.log("Updating settings for difficulty:", difficultyId);
         const diffLevel = difficultyLevels[difficultyId];
+        
+        if (!diffLevel) {
+            console.error("Invalid difficulty:", difficultyId);
+            return;
+        }
+        
+        // Set max attempts from difficulty level
         setMaxAttempts(diffLevel.attempts);
         
         // Extract max number from range (format "1-1000" or "1-10000")
         const range = diffLevel.range.split('-');
         if (range.length === 2) {
-            setMaxNumber(parseInt(range[1]));
+            const newMaxNumber = parseInt(range[1], 10);
+            if (!isNaN(newMaxNumber) && newMaxNumber > 0) {
+                setMaxNumber(newMaxNumber);
+            } else {
+                console.error("Invalid number range in difficulty:", diffLevel.range);
+            }
+        } else {
+            console.error("Could not parse range from difficulty:", diffLevel.range);
         }
     };
+    
 
     useEffect(() => {
-        startNewGame();
+        // When difficulty changes, update settings first
+        updateDifficultySettings(difficulty);
         
+        // Then fetch leaderboard
         fetchLeaderboard()
             .then(response => {
                 setLeaderboard(response.data);
@@ -104,80 +147,159 @@ const Game = () => {
             .catch(error => {
                 console.error('Error fetching leaderboard:', error);
             });
-    }, [difficulty]); // Restart game when difficulty changes
+    }, [difficulty]); // Run when difficulty changes
+
+    // Add this separate effect to start a new game when maxNumber or maxAttempts change
+    useEffect(() => {
+    // Only start a new game if sessionId exists (not on initial render)
+        if (sessionId) {
+            console.log("Settings changed, starting new game:", {
+                difficulty, maxNumber, maxAttempts
+            });
+            startNewGame();
+        }
+    }, [maxNumber, maxAttempts]); // Run when these change
 
     const startNewGame = () => {
-        const id = Date.now().toString();
+        // Generate a new unique session ID
+        const id = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        console.log("Starting new game with ID:", id);
+        
+        // Reset game state BEFORE making the API call
         setSessionId(id);
-        setAttempts(0);
+        setAttempts(0);  // Reset attempts counter
         setGameOver(false);
         setScore(0);
         setFeedback('');
         setFeedbackType('');
-
-        //Get current difficulty settings
+        
+        // Get current difficulty settings
         const diffSettings = difficultyLevels[difficulty];
         
         // Pass difficulty info to backend
         startGame(id, { 
-            difficulty, 
-            maxNumber, 
-            maxAttempts: diffSettings.attempts
-        }).then(() => {
-            // Track game start event
-            if (window.gtag) {
-                window.gtag('event', 'game_start', {
-                    'event_category': 'gameplay',
-                    'event_label': difficulty,
-                    'value': maxNumber
-                });
+          difficulty, 
+          maxNumber, 
+          maxAttempts: diffSettings.attempts 
+        })
+        .then((response) => {
+          // If the backend returns initial game state, use it
+          if (response.data) {
+            if (response.data.max_attempts) {
+              setMaxAttempts(response.data.max_attempts);
             }
+          }
+          
+          console.log("Game started successfully with ID:", id);
+          // Track game start event
+          if (window.gtag) {
+            window.gtag('event', 'game_start', {
+              'event_category': 'gameplay',
+              'event_label': difficulty,
+              'value': maxNumber
+            });
+          }
+        })
+        .catch(error => {
+          console.error("Error starting game:", error);
+          // Show user-friendly error
+          setFeedback("There was an error starting the game. Please try again.");
+          setFeedbackType("error");
         });
-    };
+      };
 
+    
+    // This function handles the form submission
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!guess) return;
-
+        
+        // Check for valid sessionId
+        if (!sessionId) {
+          console.error("Cannot submit guess: No valid session ID");
+          setFeedback("Game session error. Please start a new game.");
+          setFeedbackType("error");
+          return;
+        }
+      
         // Track guess submission
         if (window.gtag) {
-            window.gtag('event', 'submit_guess', {
-                'event_category': 'gameplay',
-                'event_label': `attempt_${attempts + 1}`,
-                'value': parseInt(guess)
-            });
+          window.gtag('event', 'submit_guess', {
+            'event_category': 'gameplay',
+            'event_label': `attempt_${attempts + 1}`,
+            'value': parseInt(guess)
+          });
         }
-
+      
         makeGuess(sessionId, parseInt(guess))
-            .then(response => {
-                const data = response.data;
-                setFeedback(data.feedback);
-                setFeedbackType(data.feedback_type);
-                if (data.attempts) setAttempts(data.attempts);
-                if (data.score) setScore(data.score);
+          .then(response => {
+            const data = response.data;
+            console.log("Guess response:", data); // Add this to see the response
+            
+            setFeedback(data.feedback);
+            setFeedbackType(data.feedback_type);
+            
+            // Always update attempts from the response
+            if (data.attempts !== undefined) {
+              setAttempts(data.attempts);
+            } else {
+              // Increment locally if server didn't return attempts
+              setAttempts(prevAttempts => prevAttempts + 1);
+            }
+            
+            if (data.score) {
+              setScore(data.score);
+            }
+            
+            if (data.game_over) {
+              setGameOver(true);
+              
+              // Track game completion
+              if (window.gtag) {
+                window.gtag('event', 'game_complete', {
+                  'event_category': 'gameplay',
+                  'event_label': data.feedback_type === 'success' ? 'win' : 'lose',
+                  'value': data.score || 0
+                });
+              }
+            }
+            
+            playSound(data.feedback_type);
+          })
+          .catch(error => {
+            console.error("Error submitting guess:", error);
+            
+            // Check if it's a max attempts error (400 status)
+            if (error.response && error.response.status === 400) {
+              // If we get specific error data, use it
+              if (error.response.data && error.response.data.feedback) {
+                setFeedback(error.response.data.feedback);
+                setFeedbackType(error.response.data.feedback_type || 'error');
                 
-                if (data.game_over) {
-                    setGameOver(true);
-                    
-                    // Track game completion
-                    if (window.gtag) {
-                        window.gtag('event', 'game_complete', {
-                            'event_category': 'gameplay',
-                            'event_label': data.feedback_type === 'success' ? 'win' : 'lose',
-                            'value': data.score || 0
-                        });
-                    }
+                // Check if game should be over
+                if (error.response.data.game_over) {
+                  setGameOver(true);
                 }
                 
-                playSound(data.feedback_type);
-            })
-            .catch(error => {
-                setFeedback('An error occurred. Please try again.');
+                // Update attempts if provided
+                if (error.response.data.attempts !== undefined) {
+                  setAttempts(error.response.data.attempts);
+                }
+              } else {
+                // Generic message if no specific data
+                setFeedback('Maximum attempts reached. Game over!');
                 setFeedbackType('error');
-            });
-
+                setGameOver(true);
+              }
+            } else {
+              // Generic error for other issues
+              setFeedback('An error occurred. Please try again or start a new game.');
+              setFeedbackType('error');
+            }
+          });
+      
         setGuess('');
-    };
+      };
 
     const handleReset = () => {
         // Track game reset
@@ -195,10 +317,16 @@ const Game = () => {
     };
 
     const handleDifficultyChange = (difficultyId) => {
-        setDifficulty(difficultyId);
-        updateDifficultySettings(difficultyId);
-        localStorage.setItem('numberNinjaDifficulty', difficultyId);
-        setShowDifficultySelector(false);
+        console.log("Changing difficulty to:", difficultyId);
+        
+        // Only change if it's a valid difficulty
+        if (difficultyLevels[difficultyId]) {
+            setDifficulty(difficultyId);
+            localStorage.setItem('numberNinjaDifficulty', difficultyId);
+            setShowDifficultySelector(false);
+        } else {
+            console.error("Invalid difficulty selected:", difficultyId);
+        }
     };
 
     const playSound = (type) => {
@@ -287,7 +415,9 @@ const Game = () => {
                                 </div>
                                 
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-400">Attempts: {attempts}/{maxAttempts}</span>
+                                    <span className="text-gray-400">
+                                        Attempts: {attempts > 0 || gameOver ? attempts: "-" }/{maxAttempts}
+                                        </span>
                                     <span className="text-blue-400">Score: {score}</span>
                                 </div>
 

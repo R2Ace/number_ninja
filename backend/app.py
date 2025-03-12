@@ -100,70 +100,154 @@ def home():
 # Route to start a new game
 @app.route('/api/start', methods=['POST'])
 def start_game():
-    print("Received request to /api/start")
-    data = request.json
-    session_id = data.get('session_id')
-    
-    # Get difficulty settings
-    max_number = data.get('max_number', 1000)
-    max_attempts = data.get('max_attempts', 5)
-    difficulty = data.get('difficulty', 'ninja')
-    
-    if not session_id:
-        return jsonify({'error': 'Session ID is required.'}), 400
-
-    # Generate random number based on the max_number
-    random_number = random.randint(1, max_number)
-    
-    game_state[session_id] = {
-        'random_number': random_number,
-        'attempts': 0,
-        'score': 0,
-        'max_attempts': max_attempts,
-        'difficulty': difficulty,
-        'max_number': max_number
-    }
-    
-    return jsonify({
-        'message': 'Game started.',
-        'difficulty': difficulty,
-        'max_attempts': max_attempts,
-        'max_number': max_number
-    }), 200
+    try:
+        print("Received request to /api/start")
+        data = request.json
+        print("Request data:", data)
+        
+        session_id = data.get('session_id')
+        if not session_id:
+            print("Error: Missing session_id")
+            return jsonify({'error': 'Session ID is required.'}), 400
+            
+        # Validate session_id format
+        if not isinstance(session_id, str) or len(session_id) < 5:
+            print(f"Invalid session_id format: {session_id}")
+            return jsonify({'error': 'Invalid session ID format.'}), 400
+        
+        # Get difficulty settings with type conversion and defaults
+        try:
+            max_number = int(data.get('max_number', 1000))
+            max_attempts = int(data.get('max_attempts', 5))
+            difficulty = str(data.get('difficulty', 'ninja'))
+            
+            # Validate ranges with safe defaults
+            if max_number <= 0 or max_number > 100000:  # Upper limit for safety
+                print(f"Invalid max_number ({max_number}), using default 1000")
+                max_number = 1000
+                
+            if max_attempts <= 0 or max_attempts > 20:  # Upper limit for safety
+                print(f"Invalid max_attempts ({max_attempts}), using default 5")
+                max_attempts = 5
+                
+            print(f"Game settings: difficulty={difficulty}, max_number={max_number}, max_attempts={max_attempts}")
+        except (TypeError, ValueError) as e:
+            print(f"Error parsing game settings: {e}")
+            # Set defaults if conversion fails
+            max_number = 1000
+            max_attempts = 5
+            difficulty = 'ninja'
+        
+        # Generate random number based on the max_number
+        random_number = random.randint(1, max_number)
+        print(f"Generated random number: {random_number} (1-{max_number})")
+        
+        # Create or update game state
+        game_state[session_id] = {
+            'random_number': random_number,
+            'attempts': 0,
+            'score': 0,
+            'max_attempts': max_attempts,
+            'difficulty': difficulty,
+            'max_number': max_number,
+            'started_at': datetime.utcnow().isoformat()  # Add timestamp for debugging
+        }
+        
+        print(f"Game state created for session {session_id}: {game_state[session_id]}")
+        
+        return jsonify({
+            'message': 'Game started.',
+            'session_id': session_id,  # Echo back the session_id for verification
+            'difficulty': difficulty,
+            'max_attempts': max_attempts,
+            'max_number': max_number
+        }), 200
+    except Exception as e:
+        print(f"Unexpected error in start_game: {str(e)}")
+        return jsonify({'error': 'Server error starting game.'}), 500
 
 # Update the make_guess function with rate limiting and enhanced validation
 @app.route('/api/guess', methods=['POST'])
 @limiter.limit("10 per minute")  # Rate limit: 10 guesses per minute
 def make_guess():
     try:
-        session_id = request.json.get('session_id')
-        user_guess = request.json.get('guess')
+        print("Received request to /api/guess")
+        data = request.json
+        print("Request data:", data)
+        
+        session_id = data.get('session_id')
+        user_guess = data.get('guess')
 
-        if not session_id or user_guess is None:
-            return jsonify({'error': 'Session ID and guess are required.'}), 400
+        if not session_id:
+            print("Error: Missing session_id")
+            return jsonify({
+                'error': 'Session ID is required.',
+                'feedback': 'Game session error. Please start a new game.',
+                'feedback_type': 'error'
+            }), 400
+            
+        if user_guess is None:
+            print("Error: Missing guess")
+            return jsonify({
+                'error': 'Guess is required.',
+                'feedback': 'Please enter a number to guess.',
+                'feedback_type': 'error'
+            }), 400
 
         # Get game state
         state = game_state.get(session_id)
         if not state:
-            return jsonify({'error': 'Game not started. Please start a new game.'}), 400
+            print(f"Error: Game not found for session {session_id}")
+            return jsonify({
+                'error': 'Game not started or session expired.',
+                'feedback': 'Game session not found. Please start a new game.',
+                'feedback_type': 'error',
+                'game_over': True  # Mark as game over to prompt new game
+            }), 400
 
-        # Get max attempts from state
+        print(f"Game state for session {session_id}: {state}")
+        
+        # Get max attempts from state with fallback
         max_attempts = state.get('max_attempts', MAX_ATTEMPTS)
         
+        # *** IMPORTANT CHANGE: Return a normal 200 status for max attempts ***
         # Verify this isn't too many attempts
         if state['attempts'] >= max_attempts:
-            return jsonify({'error': 'Maximum attempts reached.'}), 400
+            return jsonify({
+                'error': 'Maximum attempts reached.',
+                'feedback': f"Game over! The correct number was {state['random_number']}.",
+                'feedback_type': 'error',
+                'game_over': True,
+                'attempts': state['attempts'],
+                'max_attempts': max_attempts
+            }), 200  # Changed from 400 to 200
 
         # Verify the guess is within valid range
         max_number = state.get('max_number', 1000)
-        if not (1 <= user_guess <= max_number):
-            return jsonify({'error': f'Guess must be between 1 and {max_number}.'}), 400
+        try:
+            user_guess = int(user_guess)
+            if not (1 <= user_guess <= max_number):
+                print(f"Error: Guess {user_guess} out of range 1-{max_number}")
+                return jsonify({
+                    'error': f'Guess must be between 1 and {max_number}.',
+                    'feedback': f'Please enter a number between 1 and {max_number}.',
+                    'feedback_type': 'error',
+                    'attempts': state['attempts'],  # Return current attempts for UI
+                    'max_attempts': max_attempts
+                }), 400
+        except (TypeError, ValueError):
+            print(f"Error: Invalid guess format {user_guess}")
+            return jsonify({
+                'error': 'Guess must be a number.',
+                'feedback': 'Please enter a valid number.',
+                'feedback_type': 'error',
+                'attempts': state['attempts'],  # Return current attempts for UI
+                'max_attempts': max_attempts
+            }), 400
 
         # Increment attempts
         state['attempts'] += 1
-        
-        # Record this guess to prevent duplicates
-        state.setdefault('previous_guesses', []).append(user_guess)
+        current_attempts = state['attempts']
         
         # Check if winning
         if user_guess == state['random_number']:
@@ -177,21 +261,25 @@ def make_guess():
             }.get(state.get('difficulty', 'ninja'), 2)
             
             # Base score calculation
-            calculated_score = (max_attempts - state['attempts'] + 1) * difficulty_multiplier
+            calculated_score = (max_attempts - current_attempts + 1) * difficulty_multiplier * 10
             state['score'] = calculated_score
             
             return jsonify({
                 'feedback': "Congratulations! You've guessed the correct number!",
                 'feedback_type': 'success',
                 'score': calculated_score,
+                'attempts': current_attempts,
+                'max_attempts': max_attempts,
                 'game_over': True
             }), 200
         
         # Check if too many attempts
-        if state['attempts'] >= max_attempts:
+        if current_attempts >= max_attempts:
             return jsonify({
                 'feedback': f"Game over! The correct number was {state['random_number']}.",
-                'feedback_type': 'danger',
+                'feedback_type': 'error',
+                'attempts': current_attempts,
+                'max_attempts': max_attempts,
                 'game_over': True
             }), 200
         
@@ -206,12 +294,16 @@ def make_guess():
         return jsonify({
             'feedback': feedback,
             'feedback_type': feedback_type,
-            'attempts': state['attempts'],
+            'attempts': current_attempts,
             'max_attempts': max_attempts
         }), 200
     except Exception as e:
         print(f"Error processing guess: {str(e)}")
-        return jsonify({'error': 'An error occurred processing your guess.'}), 500
+        return jsonify({
+            'error': 'An error occurred processing your guess.',
+            'feedback': 'Server error. Please try again.',
+            'feedback_type': 'error'
+        }), 500
 
 # Route to reset the game
 @app.route('/api/reset', methods=['POST'])

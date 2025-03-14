@@ -1,8 +1,6 @@
 import React from 'react';
-import { useTheme } from '../context/ThemeContext';
 import { Shield, Target, Zap, Award, Flame } from 'lucide-react';
 
-// Define difficulty levels
 export const difficultyLevels = {
   rookie: {
     id: 'rookie',
@@ -51,56 +49,57 @@ export const difficultyLevels = {
   }
 };
 
-const DifficultyCard = ({ difficulty, isSelected, onSelect }) => {
-  const { currentTheme } = useTheme();
-  const Icon = difficulty.icon;
-  
+const DifficultySelector = ({ selectedDifficulty, onSelectDifficulty, onClose }) => {
   return (
-    <button
-      onClick={() => onSelect(difficulty.id)}
-      className={`w-full text-left border p-4 rounded-lg transition-all
-        ${isSelected 
-          ? `border-${difficulty.color}-500 bg-${difficulty.color}-500/10` 
-          : `border-gray-700 hover:border-${difficulty.color}-500/50 ${currentTheme.cardBg}`}`}
-    >
-      <div className="flex items-center space-x-3 mb-2">
-        <Icon className={`w-5 h-5 text-${difficulty.color}-500`} />
-        <h3 className="font-bold text-white">{difficulty.name}</h3>
-      </div>
-      
-      <div className="flex justify-between text-sm mb-2">
-        <span className="text-gray-400">Range: {difficulty.range}</span>
-        <span className="text-gray-400">Attempts: {difficulty.attempts}</span>
-      </div>
-      
-      <p className="text-gray-300 text-sm">{difficulty.description}</p>
-    </button>
-  );
-};
-
-const DifficultySelector = ({ selectedDifficulty, onSelectDifficulty }) => {
-  const { currentTheme } = useTheme();
-  
-  const handleSelect = (difficultyId) => {
-    onSelectDifficulty(difficultyId);
-  };
-  
-  return (
-    <div className={`${currentTheme.cardBg} backdrop-blur-sm border border-gray-700/50 rounded-xl p-6`}>
-      <h2 className={`text-xl font-bold text-white mb-4 flex items-center`}>
-        <Target className={`w-5 h-5 text-${currentTheme.primary}-500 mr-2`} />
-        Difficulty Level
-      </h2>
-      
-      <div className="space-y-3">
-        {Object.values(difficultyLevels).map((difficulty) => (
-          <DifficultyCard 
-            key={difficulty.id}
-            difficulty={difficulty}
-            isSelected={selectedDifficulty === difficulty.id}
-            onSelect={handleSelect}
-          />
-        ))}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="max-w-2xl w-full mx-4 bg-gradient-to-b from-blue-900 to-blue-700 rounded-2xl overflow-hidden">
+        <div className="p-8">
+          <h1 className="text-3xl font-bold text-white text-center mb-8">Select Difficulty Level</h1>
+          
+          <div className="flex flex-col space-y-3">
+            {Object.values(difficultyLevels).map((difficulty) => (
+              <button
+                key={difficulty.id}
+                onClick={() => onSelectDifficulty(difficulty.id)}
+                className={`w-full py-4 px-6 rounded-lg text-white font-bold transition-all duration-200 flex items-center
+                  ${selectedDifficulty === difficulty.id 
+                    ? `bg-gradient-to-r from-${difficulty.color}-600 to-${difficulty.color}-800 border-2 border-${difficulty.color}-400` 
+                    : 'bg-blue-800/80 hover:bg-blue-700 border border-blue-600/30 hover:border-blue-500'}`
+                }
+              >
+                <difficulty.icon className="w-5 h-5 mr-3" />
+                <div className="text-left">
+                  <div className="text-lg">{difficulty.name}</div>
+                  <div className="text-xs text-gray-300 mt-1">{difficulty.range} • {difficulty.attempts} attempts</div>
+                </div>
+              </button>
+            ))}
+          </div>
+          
+          <div className="mt-8 text-center">
+            <p className="text-blue-200 max-w-lg mx-auto mb-6">
+              {selectedDifficulty && difficultyLevels[selectedDifficulty]?.description}
+            </p>
+          </div>
+          
+          <div className="mt-8 flex justify-center space-x-4">
+            {selectedDifficulty && (
+              <button
+                onClick={() => onSelectDifficulty(selectedDifficulty)}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors"
+              >
+                Start Game
+              </button>
+            )}
+            
+            <button
+              onClick={onClose}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-bold transition-colors"
+            >
+              Back to Game
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { toPng } from 'html-to-image';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import DifficultySelector, { difficultyLevels } from './DifficultySelector';
+import Support from './Support';
 
 const ShareGameResult = ({ score, attempts, difficulty }) => {
     const { currentTheme } = useTheme();
@@ -52,6 +53,7 @@ const ShareGameResult = ({ score, attempts, difficulty }) => {
     );
 };
 
+
 const Game = () => {
     const { currentTheme } = useTheme();
     const [currentUser, setCurrentUser] = useState(null);
@@ -66,6 +68,7 @@ const Game = () => {
     const [maxAttempts, setMaxAttempts] = useState(5);
     const [score, setScore] = useState(0);
     const [gameOver, setGameOver] = useState(false);
+    const [gameStarted, setGameStarted] = useState(false);
     const [leaderboard, setLeaderboard] = useState([]);
     const [currentDate] = useState(new Date().toLocaleDateString());
     const [showDifficultySelector, setShowDifficultySelector] = useState(false);
@@ -92,21 +95,14 @@ const Game = () => {
     // Start a new game when maxNumber and maxAttempts are set
     useEffect(() => {
         // Only start a new game if maxNumber and maxAttempts are set
-        // This prevents starting a game with invalid settings
-        if (maxNumber > 0 && maxAttempts > 0) {
-          console.log("Initial game settings ready, starting first game");
+        // and if we're not in the initial render
+        if (maxNumber > 0 && maxAttempts > 0 && sessionId) {
+          console.log("Settings changed, starting new game:", {
+            difficulty, maxNumber, maxAttempts
+          });
           startNewGame();
-          
-          // Also fetch the leaderboard
-          fetchLeaderboard()
-            .then(response => {
-              setLeaderboard(response.data);
-            })
-            .catch(error => {
-              console.error('Error fetching leaderboard:', error);
-            });
         }
-      }, [maxNumber, maxAttempts]); // Run when these are initially set
+      }, [maxNumber, maxAttempts]);
 
     const updateDifficultySettings = (difficultyId) => {
         console.log("Updating settings for difficulty:", difficultyId);
@@ -321,13 +317,33 @@ const Game = () => {
         
         // Only change if it's a valid difficulty
         if (difficultyLevels[difficultyId]) {
-            setDifficulty(difficultyId);
-            localStorage.setItem('numberNinjaDifficulty', difficultyId);
-            setShowDifficultySelector(false);
+          setDifficulty(difficultyId);
+          localStorage.setItem('numberNinjaDifficulty', difficultyId);
+          
+          // Close the difficulty selector
+          setShowDifficultySelector(false);
+          
+          // Track difficulty selection
+          if (window.gtag) {
+            window.gtag('event', 'select_difficulty', {
+              'event_category': 'gameplay',
+              'event_label': difficultyId
+            });
+          }
         } else {
-            console.error("Invalid difficulty selected:", difficultyId);
+          console.error("Invalid difficulty selected:", difficultyId);
         }
-    };
+      };
+
+        // Add a reset function to go back to difficulty selection
+    const resetToSelectDifficulty = () => {
+        setGameStarted(false);
+        setGameOver(false);
+        setAttempts(0);
+        setScore(0);
+        setFeedback('');
+        setFeedbackType('');
+        };
 
     const playSound = (type) => {
         const audio = new Audio(type === 'success' ? successSound : errorSound);
@@ -403,6 +419,7 @@ const Game = () => {
                                 <DifficultySelector 
                                     selectedDifficulty={difficulty} 
                                     onSelectDifficulty={handleDifficultyChange}
+                                    onClose={() => setShowDifficultySelector(false)}
                                 />
                             </div>
                         ) : (
@@ -520,6 +537,7 @@ const Game = () => {
                     />
                 </div>
             )}
+            <Support />
         </div>
     );
 };

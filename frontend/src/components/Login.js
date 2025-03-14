@@ -15,8 +15,41 @@ const Login = () => {
     });
     const [error, setError] = useState('');
 
+    const validateForm = () => {
+        let isValid = true;
+        let errors = {};
+        
+        // Username validation
+        if (!formData.username || formData.username.length < 3) {
+          errors.username = 'Username must be at least 3 characters';
+          isValid = false;
+        }
+        
+        // Email validation (only for registration)
+        if (!isLogin) {
+          const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+          if (!formData.email || !emailPattern.test(formData.email)) {
+            errors.email = 'Please enter a valid email address';
+            isValid = false;
+          }
+        }
+        
+        // Password validation
+        if (!formData.password || formData.password.length < 8) {
+          errors.password = 'Password must be at least 8 characters';
+          isValid = false;
+        }
+        
+        setError(errors.username || errors.email || errors.password || '');
+        return isValid;
+      };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
         console.log('Form submitted:', formData);
         
         try {
@@ -123,6 +156,26 @@ const Login = () => {
                                     placeholder="Enter your password"
                                 />
                             </div>
+                            
+                            {!isLogin && (
+                              <div className="mt-2 text-xs text-gray-400">
+                                <p>Password must:</p>
+                                <ul className="list-disc pl-5 space-y-1">
+                                  <li className={formData.password.length >= 8 ? "text-green-400" : ""}>
+                                    Be at least 8 characters long
+                                  </li>
+                                  <li className={/[A-Z]/.test(formData.password) ? "text-green-400" : ""}>
+                                    Include an uppercase letter
+                                  </li>
+                                  <li className={/[a-z]/.test(formData.password) ? "text-green-400" : ""}>
+                                    Include a lowercase letter
+                                  </li>
+                                  <li className={/[0-9]/.test(formData.password) ? "text-green-400" : ""}>
+                                    Include a number
+                                  </li>
+                                </ul>
+                              </div>
+                            )}
                         </div>
 
                         {/* Error Message */}

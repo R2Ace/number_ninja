@@ -62,9 +62,34 @@ export const getScore = (sessionId) => {
 
 export const login = (credentials) => {
     return axios.post(`${API_BASE_URL}/login`, credentials, {
-        headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' }
+    }).then(response => {
+      // Store only non-sensitive data
+      const userData = {
+        user_id: response.data.user_id,
+        username: response.data.username,
+        // Do NOT include password or full tokens
+      };
+      
+      localStorage.setItem('user', JSON.stringify(userData));
+      return response;
+    }).catch(error => {
+      if (error.response) {
+        // The server responded with an error status
+        const errorMessage = error.response.data.error || 'Login failed';
+        console.error('Login error:', errorMessage);
+        throw new Error(errorMessage);
+      } else if (error.request) {
+        // No response received
+        console.error('No response from server');
+        throw new Error('No response from server. Please check your connection.');
+      } else {
+        // Request setup error
+        console.error('Request error:', error.message);
+        throw new Error('Error sending request. Please try again.');
+      }
     });
-};
+  };
 
 export const register = (userData) => {
     return axios.post(`${API_BASE_URL}/register`, userData, {

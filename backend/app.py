@@ -10,6 +10,72 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from datetime import date
 import hashlib
+import re
+
+# Validation functions
+def validate_username(username):
+    """Validate username format.
+    
+    Rules:
+    - Between 3-20 characters
+    - Alphanumeric characters and underscores only
+    """
+    if not username or not isinstance(username, str):
+        return False, "Username is required"
+    
+    if not 3 <= len(username) <= 20:
+        return False, "Username must be between 3 and 20 characters"
+        
+    if not re.match(r'^[a-zA-Z0-9_]+$', username):
+        return False, "Username can only contain letters, numbers, and underscores"
+        
+    return True, "Valid username"
+
+def validate_email(email):
+    """Validate email format using a simple regex pattern."""
+    if not email or not isinstance(email, str):
+        return False, "Email is required"
+        
+    # Basic email validation regex
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        return False, "Invalid email format"
+        
+    return True, "Valid email"
+
+def validate_password(password):
+    """Validate password strength.
+    
+    Rules:
+    - At least 8 characters
+    - Contains at least one uppercase letter, one lowercase letter, and one digit
+    """
+    if not password or not isinstance(password, str):
+        return False, "Password is required"
+        
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters"
+        
+    if not re.search(r'[A-Z]', password):
+        return False, "Password must contain at least one uppercase letter"
+        
+    if not re.search(r'[a-z]', password):
+        return False, "Password must contain at least one lowercase letter"
+        
+    if not re.search(r'\d', password):
+        return False, "Password must contain at least one digit"
+        
+    return True, "Valid password"
+
+def validate_session_id(session_id):
+    """Validate session ID format."""
+    if not session_id or not isinstance(session_id, str):
+        return False, "Session ID is required"
+        
+    if len(session_id) < 5:
+        return False, "Invalid session ID format"
+        
+    return True, "Valid session ID"
 
 app = Flask(__name__)
 # Configure CORS to allow requests from http://localhost:3000 to /api/*
@@ -19,9 +85,6 @@ CORS(app,
     resources={r"/api/*": {
         "origins": [
             "http://localhost:3000",
-            "https://numberninja-red.vercel.app",
-            "https://numberninja-rho.vercel.app",
-            "https://numberninja-*.vercel.app",
             "https://numbersninjas.com",
             "https://www.numbersninjas.com"
         ],
@@ -32,6 +95,12 @@ CORS(app,
 )
 # Configure the Flask app with the database settings
 app.config.from_object(Config)
+
+# Add secure session cookie settings
+app.config['SESSION_COOKIE_SECURE'] = True  # Only send cookies over HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Prevent CSRF
+
 db = SQLAlchemy(app)
 print("Flask running with DB URI:", app.config['SQLALCHEMY_DATABASE_URI'])
 
@@ -48,7 +117,11 @@ class User(db.Model):
     scores = db.relationship('Score', backref='user', lazy=True)
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        """Hash a password for storing"""
+        self.password_hash = generate_password_hash(
+            password,
+            method='pbkdf2:sha256:100000',
+            salt_length=16)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -84,6 +157,21 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 limiter.init_app(app)
+
+# Security headers
+@app.after_request
+def add_security_headers(response):
+    # Prevent clickjacking attacks
+    response.headers['X-Frame-Options'] = 'DENY'
+    # Enable XSS protection
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Prevent MIME type sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Content Security Policy
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://www.google-analytics.com"
+    # HTTPS strict
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
 
 
 # API routes
@@ -330,14 +418,31 @@ def get_score():
 
 # Route to register a new user
 @app.route('/api/register', methods=['POST'])
+@limiter.limit("20 per hour")
 def register():
     try:
         data = request.json
         print("Register data received:", data)  # Debug log
         
-        if User.query.filter_by(username=data['username']).first():
-            return jsonify({'error': 'Username exists'}), 400
+        # Validate input data
+        username_valid, username_msg = validate_username(data.get('username'))
+        if not username_valid:
+            return jsonify({'error': username_msg}), 400
             
+        email_valid, email_msg = validate_email(data.get('email'))
+        if not email_valid:
+            return jsonify({'error': email_msg}), 400
+            
+        password_valid, password_msg = validate_password(data.get('password'))
+        if not password_valid:
+            return jsonify({'error': password_msg}), 400
+        
+        if User.query.filter_by(username=data['username']).first():
+            return jsonify({'error': 'Username already exists'}), 400
+            
+        if User.query.filter_by(email=data['email']).first():
+            return jsonify({'error': 'Email already exists'}), 400
+        
         user = User(username=data['username'], email=data['email'])
         user.set_password(data['password'])
         
@@ -358,6 +463,7 @@ def register():
 
 # Route to login
 @app.route('/api/login', methods=['POST'])
+@limiter.limit("20 per hour")
 def login():
     try:
         print("Database URL:", app.config['SQLALCHEMY_DATABASE_URI'])

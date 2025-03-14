@@ -4,6 +4,8 @@ import { Calendar, Star, Trophy, SendHorizonal } from 'lucide-react';
 import { startDailyChallenge, makeGuess, saveDailyChallenge, getDailyLeaderboard } from '../services/api';
 import successSound from '../assets/success.mp3';
 import errorSound from '../assets/error.mp3';
+import { useTheme } from '../context/ThemeContext';
+import { Link } from 'react-router-dom';
 
 const DailyChallenge = () => {
     const navigate = useNavigate();
@@ -19,6 +21,8 @@ const DailyChallenge = () => {
     const [leaderboard, setLeaderboard] = useState([]);
     const [error, setError] = useState('');
     const [completed, setCompleted] = useState(false);
+    const { currentTheme } = useTheme();
+    const currentDate = useState(new Date().toLocaleDateString());
     
     // Load user data
     useEffect(() => {
@@ -182,6 +186,33 @@ const DailyChallenge = () => {
                 <div className="mb-6 text-center">
                     <h1 className="text-3xl font-bold text-white mb-2">Daily Challenge</h1>
                     <p className="text-gray-300">Solve today's number puzzle for bonus points!</p>
+                </div>
+
+                {/* Add promotional block here */}
+                <div className="max-w-4xl mx-auto mb-6">
+                    <div className={`bg-gradient-to-r from-${currentTheme.secondary}-800 to-${currentTheme.primary}-800 rounded-xl p-4 shadow-lg relative overflow-hidden`}>
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/20 rounded-full -mr-8 -mt-8 blur-2xl"></div>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                                <div className="bg-yellow-500/20 p-3 rounded-lg">
+                                    <Calendar className="w-8 h-8 text-yellow-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-white font-bold text-lg">Daily Challenge</h3>
+                                    <p className="text-gray-300 text-sm">{currentDate}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center">
+                                <Star className="w-5 h-5 text-yellow-400 mr-1" />
+                                <Link 
+                                    to="/daily" 
+                                    className="bg-white text-indigo-900 hover:bg-yellow-100 font-bold py-2 px-4 rounded-lg shadow transition-colors"
+                                >
+                                    Play Today's Challenge
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">

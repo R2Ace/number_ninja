@@ -1,7 +1,9 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const Footer = () => {
+    const { currentTheme } = useTheme();
     const currentYear = new Date().getFullYear();
 
     return (
@@ -14,7 +16,7 @@ const Footer = () => {
                     
                     <div className="flex items-center space-x-2 text-gray-400">
                         <span>Made with</span>
-                        <Heart className="h-4 w-4 text-red-500 animate-pulse" />
+                        <Heart className={`h-4 w-4 text-${currentTheme.secondary}-500 animate-pulse`} />
                         <span>by Luminary Labz</span>
                     </div>
                 </div>

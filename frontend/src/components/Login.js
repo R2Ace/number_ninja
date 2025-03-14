@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import {useNavigate} from 'react-router-dom';
 import { Target, User, Lock, Mail } from 'lucide-react';
 import { login, register } from '../services/api';
+import { useTheme } from '../context/ThemeContext';
 
 const Login = () => {
+    const { currentTheme } = useTheme();
     const navigate = useNavigate(); // Use this to redirect to another page
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({
@@ -60,12 +62,12 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-16 px-4">
+        <div className={`min-h-screen bg-gradient-to-b ${currentTheme.background} py-16 px-4`}>
             <div className="max-w-md mx-auto">
-                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
+                <div className={`${currentTheme.cardBg} backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8`}>
                     {/* Header */}
                     <div className="flex items-center justify-center space-x-3 mb-8">
-                        <Target className="w-8 h-8 text-blue-500" />
+                        <Target className={`w-8 h-8 text-${currentTheme.primary}-500`}/>
                         <h2 className="text-2xl font-bold text-white">
                             Number Ninja
                         </h2>
@@ -131,7 +133,7 @@ const Login = () => {
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-all transform hover:scale-105"
+                            className={`w-full ${currentTheme.buttonBg} text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-all transform hover:scale-105`}
                         >
                             {isLogin ? 'Login' : 'Register'}
                         </button>

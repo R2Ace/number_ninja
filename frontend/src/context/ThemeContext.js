@@ -1,3 +1,5 @@
+// Update to the ThemeContext.js to simplify the theme system
+
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 // Define available themes
@@ -78,21 +80,13 @@ export const ThemeProvider = ({ children }) => {
     return savedTheme && themes[savedTheme] ? themes[savedTheme] : themes.classic;
   });
   
-  // Track unlocked themes
-  const [unlockedThemes, setUnlockedThemes] = useState(() => {
-    const saved = localStorage.getItem('unlockedThemes');
-    return saved ? JSON.parse(saved) : ['classic', 'emerald']; // Default unlocked themes
-  });
+  // For the simplified version, we'll just have two themes unlocked
+  const unlockedThemes = ['classic', 'emerald'];
 
   // Save theme changes to localStorage
   useEffect(() => {
     localStorage.setItem('numberNinjaTheme', currentTheme.id);
   }, [currentTheme]);
-
-  // Save unlocked themes to localStorage
-  useEffect(() => {
-    localStorage.setItem('unlockedThemes', JSON.stringify(unlockedThemes));
-  }, [unlockedThemes]);
 
   // Set a new theme
   const changeTheme = (themeId) => {
@@ -101,20 +95,6 @@ export const ThemeProvider = ({ children }) => {
       return true;
     }
     return false;
-  };
-
-  // Unlock a new theme
-  const unlockTheme = (themeId) => {
-    if (themes[themeId] && !unlockedThemes.includes(themeId)) {
-      setUnlockedThemes([...unlockedThemes, themeId]);
-      return true;
-    }
-    return false;
-  };
-
-  // Unlock all themes (e.g., after purchase)
-  const unlockAllThemes = () => {
-    setUnlockedThemes(Object.keys(themes));
   };
 
   // Check if a theme is unlocked
@@ -127,9 +107,6 @@ export const ThemeProvider = ({ children }) => {
       currentTheme,
       changeTheme,
       allThemes: themes,
-      unlockedThemes,
-      unlockTheme,
-      unlockAllThemes,
       isThemeUnlocked
     }}>
       {children}

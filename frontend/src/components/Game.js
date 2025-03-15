@@ -351,7 +351,7 @@ const Game = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
+        <div className={`min-h-screen flex flex-col bg-gradient-to-b ${currentTheme.background}`}>
             <div className="container mx-auto px-4 py-8 flex-grow">
                 <div className="mb-6 text-center">
                     {currentUser ? (
@@ -451,7 +451,7 @@ const Game = () => {
                                     />
                                     <button 
                                         type="submit"
-                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                                        className={`w-full ${currentTheme.buttonBg} text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2`}
                                     >
                                         <Send className="w-5 h-5" />
                                         <span>Submit Guess</span>
@@ -460,9 +460,9 @@ const Game = () => {
 
                                 {feedback && (
                                     <div className={`p-4 rounded-lg ${
-                                        feedbackType === 'success' ? 'bg-green-600/20 text-green-400' :
+                                        feedbackType === 'success' ? `bg-${currentTheme.primary}-600/20 text-${currentTheme.primary}-400` :
                                         feedbackType === 'error' ? 'bg-red-600/20 text-red-400' :
-                                        'bg-yellow-600/20 text-yellow-400'
+                                        `bg-${currentTheme.accent}-600/20 text-${currentTheme.accent}-400`
                                     }`}>
                                         {feedback}
                                     </div>

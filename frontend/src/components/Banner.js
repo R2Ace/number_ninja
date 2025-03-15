@@ -27,7 +27,10 @@ const Banner = () => {
                             to="/login" 
                             className={`${currentTheme.buttonBg} text-white px-4 py-2 rounded-lg transform hover:scale-105 transition-all`}
                         >
-                            Login
+                            <div className="flex items-center space-x-2">
+                                <Target className={`h-5 w-5 text-white`}/>
+                                <span>Login</span>
+                            </div>
                         </Link>
                     </div>
                 </div>

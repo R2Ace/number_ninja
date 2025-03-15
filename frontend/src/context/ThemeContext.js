@@ -1,8 +1,8 @@
-// Update to the ThemeContext.js to simplify the theme system
+// Updated ThemeContext.js with enhanced theme definitions
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-// Define available themes
+// Enhanced theme definitions with more style properties
 export const themes = {
   classic: {
     id: 'classic',
@@ -13,6 +13,10 @@ export const themes = {
     background: 'from-gray-900 to-gray-800',
     cardBg: 'bg-gray-800/50',
     buttonBg: 'bg-blue-600 hover:bg-blue-700',
+    headingGradient: 'from-blue-400 to-purple-500',
+    accentText: 'text-blue-400',
+    highlightText: 'text-blue-500',
+    bannerGradient: 'from-indigo-800 to-purple-800',
     isDefault: true,
     isPremium: false
   },
@@ -23,8 +27,12 @@ export const themes = {
     secondary: 'teal',
     accent: 'amber',
     background: 'from-gray-900 to-emerald-900',
-    cardBg: 'bg-emerald-900/50',
+    cardBg: 'bg-emerald-900/30',
     buttonBg: 'bg-emerald-600 hover:bg-emerald-700',
+    headingGradient: 'from-black to-black', // Black gradient for "the Unbeatable"
+    accentText: 'text-emerald-400',
+    highlightText: 'text-emerald-500',
+    bannerGradient: 'from-teal-800 to-emerald-800',
     isDefault: false,
     isPremium: false
   },
@@ -37,6 +45,10 @@ export const themes = {
     background: 'from-gray-900 to-purple-900',
     cardBg: 'bg-purple-900/40',
     buttonBg: 'bg-purple-600 hover:bg-purple-700',
+    headingGradient: 'from-purple-400 to-indigo-500',
+    accentText: 'text-purple-400',
+    highlightText: 'text-purple-500',
+    bannerGradient: 'from-indigo-800 to-purple-800',
     isDefault: false,
     isPremium: true
   },
@@ -49,6 +61,10 @@ export const themes = {
     background: 'from-gray-900 to-orange-900',
     cardBg: 'bg-orange-900/30',
     buttonBg: 'bg-orange-600 hover:bg-orange-700',
+    headingGradient: 'from-orange-400 to-red-500',
+    accentText: 'text-orange-400',
+    highlightText: 'text-orange-500',
+    bannerGradient: 'from-red-800 to-orange-800',
     isDefault: false,
     isPremium: true
   },
@@ -61,6 +77,10 @@ export const themes = {
     background: 'from-black to-gray-900',
     cardBg: 'bg-black/50',
     buttonBg: 'bg-yellow-600 hover:bg-yellow-700',
+    headingGradient: 'from-yellow-400 to-amber-500',
+    accentText: 'text-yellow-400',
+    highlightText: 'text-yellow-500',
+    bannerGradient: 'from-amber-800 to-yellow-800',
     isDefault: false,
     isPremium: true
   }

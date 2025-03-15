@@ -124,14 +124,14 @@ const DailyChallenge = () => {
     
     if (!currentUser) {
         return (
-            <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-16 px-4">
+            <div className={`min-h-screen flex flex-col bg-gradient-to-b ${currentTheme.background}`}>
                 <div className="max-w-md mx-auto bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 text-center">
                     <Calendar className="mx-auto h-16 w-16 text-blue-500 mb-4" />
                     <h2 className="text-2xl font-bold text-white mb-4">Daily Challenge</h2>
                     <p className="text-gray-300 mb-6">Please log in to participate in the daily challenge.</p>
                     <button 
                         onClick={() => navigate('/login')}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium"
+                        className={`px-6 py-3 ${currentTheme.buttonBg} text-white rounded-lg font-medium`}
                     >
                         Login to Play
                     </button>
@@ -142,7 +142,7 @@ const DailyChallenge = () => {
     
     if (completed) {
         return (
-            <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-16 px-4">
+            <div className={`min-h-screen flex flex-col bg-gradient-to-b ${currentTheme.background}`}>
                 <div className="max-w-md mx-auto bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 text-center">
                     <Star className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
                     <h2 className="text-2xl font-bold text-white mb-4">Daily Challenge Completed</h2>
@@ -154,7 +154,7 @@ const DailyChallenge = () => {
                     <p className="text-gray-400 mb-6">Come back tomorrow for a new challenge!</p>
                     <button 
                         onClick={() => navigate('/game')}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium"
+                        className={`px-6 py-3 ${currentTheme.buttonBg} text-white rounded-lg font-medium`}
                     >
                         Play Regular Game
                     </button>
@@ -163,15 +163,16 @@ const DailyChallenge = () => {
         );
     }
     
+    // Update the error screen container
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 py-16 px-4">
+            <div className={`min-h-screen flex flex-col bg-gradient-to-b ${currentTheme.background}`}>
                 <div className="max-w-md mx-auto bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8 text-center">
                     <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
                     <p className="text-red-400 mb-6">{error}</p>
                     <button 
                         onClick={() => navigate('/game')}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium"
+                        className={`px-6 py-3 ${currentTheme.buttonBg} text-white rounded-lg font-medium`}
                     >
                         Play Regular Game
                     </button>
@@ -180,8 +181,9 @@ const DailyChallenge = () => {
         );
     }
     
+    // Update the daily challenge banner in the main component
     return (
-        <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
+        <div className={`min-h-screen flex flex-col bg-gradient-to-b ${currentTheme.background}`}>
             <div className="container mx-auto px-4 py-8 flex-grow">
                 <div className="mb-6 text-center">
                     <h1 className="text-3xl font-bold text-white mb-2">Daily Challenge</h1>
@@ -190,7 +192,7 @@ const DailyChallenge = () => {
 
                 {/* Add promotional block here */}
                 <div className="max-w-4xl mx-auto mb-6">
-                    <div className={`bg-gradient-to-r from-${currentTheme.secondary}-800 to-${currentTheme.primary}-800 rounded-xl p-4 shadow-lg relative overflow-hidden`}>
+                    <div className={`bg-gradient-to-r ${currentTheme.bannerGradient} rounded-xl p-4 shadow-lg relative overflow-hidden`}>
                         <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/20 rounded-full -mr-8 -mt-8 blur-2xl"></div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
@@ -206,7 +208,7 @@ const DailyChallenge = () => {
                                 <Star className="w-5 h-5 text-yellow-400 mr-1" />
                                 <Link 
                                     to="/daily" 
-                                    className="bg-white text-indigo-900 hover:bg-yellow-100 font-bold py-2 px-4 rounded-lg shadow transition-colors"
+                                    className={`bg-white text-${currentTheme.primary}-900 hover:bg-yellow-100 font-bold py-2 px-4 rounded-lg shadow transition-colors`}
                                 >
                                     Play Today's Challenge
                                 </Link>
@@ -249,7 +251,7 @@ const DailyChallenge = () => {
                                 />
                                 <button 
                                     type="submit"
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                                    className={`w-full ${currentTheme.buttonBg} text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2`}
                                     disabled={gameOver}
                                 >
                                     <SendHorizonal className="w-5 h-5" />
@@ -257,21 +259,23 @@ const DailyChallenge = () => {
                                 </button>
                             </form>
 
+                            {/* Update the feedback message */}
                             {feedback && (
                                 <div className={`p-4 rounded-lg ${
-                                    feedbackType === 'success' ? 'bg-green-600/20 text-green-400' :
-                                    feedbackType === 'error' ? 'bg-red-600/20 text-red-400' :
-                                    'bg-yellow-600/20 text-yellow-400'
+                                    feedbackType === 'success' ? `bg-${currentTheme.primary}-600/20 text-${currentTheme.primary}-400` :
+                                    feedbackType === 'error' ? `bg-red-600/20 text-red-400` :
+                                    `bg-${currentTheme.accent}-600/20 text-${currentTheme.accent}-400`
                                 }`}>
                                     {feedback}
                                 </div>
                             )}
 
+                            {/* Update the "Play Regular Game" button in the game over section */}
                             {gameOver && (
                                 <div className="mt-6 text-center">
                                     <button 
                                         onClick={() => navigate('/game')}
-                                        className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium"
+                                        className={`px-6 py-3 ${currentTheme.buttonBg} text-white rounded-lg font-medium`}
                                     >
                                         Play Regular Game
                                     </button>

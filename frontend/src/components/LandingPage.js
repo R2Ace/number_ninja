@@ -7,7 +7,7 @@ const LandingPage = () => {
   const { currentTheme } = useTheme();
   
   return (
-    <div className={`min-h-screen ${currentTheme.background}`}>
+    <div className={`min-h-screen bg-gradient-to-b ${currentTheme.background}`}>
       {/* Hero Section */}
       <div className="container mx-auto px-4 pt-20 pb-32">
         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -15,12 +15,13 @@ const LandingPage = () => {
           <div className="space-y-8">
             <div className="flex items-center space-x-3">
               <Target className={`w-8 h-8 text-${currentTheme.primary}-500`} />
-              <span className={`text-xl text-${currentTheme.primary}-500 font-semibold`}>Number Ninja</span>
+              <span className={`text-xl ${currentTheme.accentText} font-semibold`}>Number Ninja</span>
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold text-white">
               Think You Can Beat
-              <span className={`text-transparent bg-clip-text bg-gradient-to-r from-${currentTheme.primary}-400 to-${currentTheme.secondary}-500`}> the Unbeatable?</span>            </h1>
+              <span className={`text-transparent bg-clip-text bg-gradient-to-r ${currentTheme.headingGradient}`}> the Unbeatable?</span>
+            </h1>
             
             <p className="text-xl text-gray-300">
               The ultimate number guessing game that challenges even the sharpest minds. 
@@ -58,12 +59,12 @@ const LandingPage = () => {
           {/* Right Column - Visual Element */}
           <div className="relative hidden md:block">
             <div className={`absolute inset-0 bg-${currentTheme.primary}-500/10 rounded-2xl blur-3xl`}></div>
-            <div className="relative bg-gray-800/50 rounded-2xl p-8 backdrop-blur-sm border border-gray-700">
+            <div className={`relative ${currentTheme.cardBg} rounded-2xl p-8 backdrop-blur-sm border border-gray-700`}>
               <div className="grid grid-cols-3 gap-4">
                 {[...Array(9)].map((_, index) => (
                   <div 
                     key={index}
-                    className="aspect-square rounded-lg bg-gray-700/50 flex items-center justify-center text-2xl font-bold text-blue-400"
+                    className={`aspect-square rounded-lg bg-gray-700/50 flex items-center justify-center text-2xl font-bold text-${currentTheme.primary}-400`}
                   >
                     {Math.floor(Math.random() * 900 + 100)}
                   </div>

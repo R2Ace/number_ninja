@@ -4,6 +4,10 @@ import { Coffee, X } from 'lucide-react';
 const Support = () => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const handleSupportRequest = () => {
+    // Handle support request logic here
+  };
+
   return (
     <>
       {/* Floating button */}
@@ -40,6 +44,14 @@ const Support = () => {
             <Coffee className="w-4 h-4 mr-2" />
             Buy Me a Coffee
           </a>
+
+          {/* Support or help button */}
+          <button 
+            onClick={handleSupportRequest}
+            className="bg-yellow-500 text-white font-medium py-2 px-4 rounded-lg mt-4"
+          >
+            Get Help
+          </button>
         </div>
       )}
     </>

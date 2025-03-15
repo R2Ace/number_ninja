@@ -86,10 +86,10 @@ CORS(app,
         "origins": [
             "http://localhost:3000",
             "https://numbersninjas.com",
-            "https://www.numbersninjas.com"
+            "https://www.numbersninjas.com"  # Make sure both www and non-www versions are included
         ],
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],  # Added Authorization for JWT
+        "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
     }}
 )

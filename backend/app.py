@@ -11,6 +11,9 @@ from flask_limiter.util import get_remote_address
 from datetime import date
 import hashlib
 import re
+import stripe
+from datetime import datetime, timezone, timedelta
+import os
 
 # Validation functions
 def validate_username(username):
@@ -115,6 +118,7 @@ class User(db.Model):
     password_hash = db.Column(db.String(256))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     scores = db.relationship('Score', backref='user', lazy=True)
+    premium_themes = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         """Hash a password for storing"""
@@ -409,7 +413,7 @@ def reset_game():
 def get_score():
     session_id = request.args.get('session_id')
     if not session_id:
-        return jsonify({'error': 'Session ID is required.'}), 400
+        return jsonify({'error': 'Session ID is required'}), 400
 
     state = game_state.get(session_id)
     if not state:
@@ -716,24 +720,92 @@ def get_daily_leaderboard():
     
     return jsonify(leaderboard), 200
 
+# Set the environment variable in your hosting environment
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
 
+@app.route('/api/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    try:
+        data = request.json
+        price_id = data.get('priceId')
+        user_id = data.get('userId', 'guest')
+        username = data.get('username', 'Guest User')
+        
+        if not price_id:
+            return jsonify({'error': 'Price ID is required'}), 400
+            
+        # Create a new checkout session
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price': price_id,  # This would be your actual price ID from Stripe
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url=request.headers.get('Origin', 'https://numbersninjas.com') + '/themes?payment_success=true',
+            cancel_url=request.headers.get('Origin', 'https://numbersninjas.com') + '/themes?payment_cancelled=true',
+            metadata={
+                'user_id': user_id,
+                'username': username
+            },
+        )
+        
+        return jsonify({'id': checkout_session.id})
+    except Exception as e:
+        print(f"Error creating checkout session: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+        
+@app.route('/api/stripe-webhook', methods=['POST'])
+def stripe_webhook():
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get('Stripe-Signature')
 
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, os.getenv('STRIPE_WEBHOOK_SECRET', 'whsec_your_webhook_secret')
+        )
+    except ValueError as e:
+        # Invalid payload
+        print(f"Invalid payload: {str(e)}")
+        return jsonify({'error': 'Invalid payload'}), 400
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        print(f"Invalid signature: {str(e)}")
+        return jsonify({'error': 'Invalid signature'}), 400
 
+    # Handle the event
+    if event['type'] == 'checkout.session.completed':
+        checkout_session = event['data']['object']
+        
+        # Get user info from metadata
+        user_id = checkout_session.get('metadata', {}).get('user_id')
+        
+        if user_id and user_id != 'guest':
+            # Update user's premium themes status
+            user = User.query.get(user_id)
+            if user:
+                # Add the premium_themes field to your User model first
+                user.premium_themes = True
+                db.session.commit()
+                print(f"User {user.username} now has premium themes")
+            
+    return jsonify({'success': True})
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+@app.route('/api/user/premium-status', methods=['GET'])
+def get_premium_status():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'User ID required'}), 400
+        
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+        
+    return jsonify({
+        'premium_themes': user.premium_themes if hasattr(user, 'premium_themes') else False
+    }), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

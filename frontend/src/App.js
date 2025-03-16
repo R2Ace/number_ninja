@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Banner from './components/Banner';
+import PrizeAnnouncements from './components/PrizeAnnouncements'; // Add this import
 import Footer from './components/Footer';
 import LandingPage from './components/LandingPage';
 import Game from './components/Game';
@@ -72,6 +73,7 @@ function App() {
         <Router>
             <div className="App">
                 <Banner />
+                <PrizeAnnouncements />
                 <Routes>
                     <Route path="/" element={
                         <RouteGuard>

@@ -1,4 +1,4 @@
-// Updated ThemeContext.js with all themes unlocked
+// Updated ThemeContext.js with Stripe integration
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
@@ -100,26 +100,63 @@ export const ThemeProvider = ({ children }) => {
     return savedTheme && themes[savedTheme] ? themes[savedTheme] : themes.classic;
   });
   
-  // MODIFIED: All themes are now unlocked for testing
-  const unlockedThemes = Object.keys(themes);
+  // Initialize with saved purchase status
+  const [hasPurchasedThemes, setHasPurchasedThemes] = useState(() => {
+    return localStorage.getItem('numberNinjaPremiumThemes') === 'true';
+  });
+
+  // Define which themes are unlocked by default
+  const defaultUnlockedThemes = ['classic', 'emerald'];
 
   // Save theme changes to localStorage
   useEffect(() => {
     localStorage.setItem('numberNinjaTheme', currentTheme.id);
   }, [currentTheme]);
 
+  // Check purchase status on Stripe success URL
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const paymentSuccess = url.searchParams.get('payment_success');
+    
+    if (paymentSuccess === 'true') {
+      // Clean URL without reloading
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Store that themes have been purchased
+      localStorage.setItem('numberNinjaPremiumThemes', 'true');
+      setHasPurchasedThemes(true);
+    }
+  }, []);
+
   // Set a new theme
   const changeTheme = (themeId) => {
     if (themes[themeId]) {
+      // Check if theme is premium and not purchased
+      if (themes[themeId].isPremium && !hasPurchasedThemes) {
+        return false;
+      }
+      
       setCurrentTheme(themes[themeId]);
       return true;
     }
     return false;
   };
 
-  // Check if a theme is unlocked - now always returns true
+  // Check if a theme is unlocked
   const isThemeUnlocked = (themeId) => {
-    return true; // All themes are unlocked for testing
+    // Non-existent theme
+    if (!themes[themeId]) return false;
+    
+    // Not premium theme
+    if (!themes[themeId].isPremium) return true;
+    
+    // Premium theme - check if purchased
+    return hasPurchasedThemes;
+  };
+
+  // Set purchase status (used after successful checkout)
+  const setPurchaseStatus = (status) => {
+    setHasPurchasedThemes(status);
+    localStorage.setItem('numberNinjaPremiumThemes', status ? 'true' : 'false');
   };
 
   return (
@@ -127,7 +164,9 @@ export const ThemeProvider = ({ children }) => {
       currentTheme,
       changeTheme,
       allThemes: themes,
-      isThemeUnlocked
+      isThemeUnlocked,
+      hasPurchasedThemes,
+      setPurchaseStatus
     }}>
       {children}
     </ThemeContext.Provider>

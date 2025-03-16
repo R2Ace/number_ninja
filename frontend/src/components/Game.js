@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { startGame, makeGuess, resetGame, fetchLeaderboard } from '../services/api';
 import successSound from '../assets/success.mp3';
 import errorSound from '../assets/error.mp3';
+// Update the import statement to remove Instagram and add a replacement
 import { Target, RefreshCw, Send, Trophy, Calendar, Star, Settings } from 'lucide-react';
+// Add a non-deprecated social media icon as replacement
+import { MessageSquare } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
@@ -41,8 +44,25 @@ const ShareGameResult = ({ score, attempts, difficulty }) => {
             <div className={`bg-gradient-to-r from-gray-900 to-${currentTheme.primary}-900/30 p-6 rounded-lg mb-6`}>
                 <p className={`text-${currentTheme.primary}-400 text-lg`}>Score: {score}</p>
                 <p className="text-gray-400">Solved in {attempts} attempts</p>
-                <p className="text-gray-400 mt-2">Difficulty: {difficultyLevels[difficulty].name}</p>
+                <p className="text-gray-400 mt-2">Battle Mode: {difficultyLevels[difficulty].name}</p>
             </div>
+            
+            {difficulty === 'ninja' && score > 0 && (
+                <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-4 mb-6 text-left">
+                    <div className="flex items-center mb-2">
+                        <Trophy className="w-5 h-5 text-yellow-500 mr-2" />
+                        <h4 className="text-yellow-300 font-medium">$100 PRIZE ELIGIBLE!</h4>
+                    </div>
+                    <p className="text-yellow-200 text-sm mb-2">
+                        You've beaten Ninja mode! You might be the first winner of our $100 prize.
+                    </p>
+                    <div className="flex items-center text-sm text-yellow-300">
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        <span>Save this image and DM @ace.sq on Instagram to claim!</span>
+                    </div>
+                </div>
+            )}
+            
             <button 
                 onClick={handleShare}
                 className={`inline-flex items-center px-6 py-3 bg-gradient-to-r from-${currentTheme.primary}-600 to-${currentTheme.secondary}-600 rounded-lg text-white font-medium hover:from-${currentTheme.primary}-700 hover:to-${currentTheme.secondary}-700 transition-all`}
@@ -361,6 +381,35 @@ const Game = () => {
                     )}
                 </div>
 
+                {/* Prize Announcement Banner */}
+                <div className="max-w-4xl mx-auto mb-6">
+                    <div className="bg-gradient-to-r from-yellow-800 to-amber-700 rounded-xl p-4 shadow-lg relative overflow-hidden border-2 border-yellow-500/30">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/20 rounded-full -mr-8 -mt-8 blur-2xl"></div>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                                <div className="bg-yellow-500/20 p-3 rounded-lg">
+                                    <Trophy className="w-8 h-8 text-yellow-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-white font-bold text-lg">$100 PRIZE!</h3>
+                                    <p className="text-yellow-200 text-sm">First winner on Ninja mode claims $100</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center">
+                                <MessageSquare className="w-5 h-5 text-yellow-400 mr-1" />
+                                <a 
+                                    href="https://instagram.com/ace.sq" 
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-white text-amber-900 hover:bg-yellow-100 font-bold py-2 px-4 rounded-lg shadow transition-colors"
+                                >
+                                    DM @ace.sq to Claim
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 {/* Daily Challenge Banner */}
                 <div className="max-w-4xl mx-auto mb-6">
                     <div className="bg-gradient-to-r from-indigo-800 to-purple-800 rounded-xl p-4 shadow-lg relative overflow-hidden">
@@ -400,7 +449,7 @@ const Game = () => {
                                 <button 
                                     onClick={() => setShowDifficultySelector(!showDifficultySelector)}
                                     className="p-2 text-yellow-400 hover:text-yellow-300 transition-colors"
-                                    title="Change Difficulty"
+                                    title="Change Battle Mode"
                                 >
                                     <Settings className="w-5 h-5" />
                                 </button>

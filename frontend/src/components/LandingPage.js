@@ -28,6 +28,13 @@ const LandingPage = () => {
               Are you ready to prove yourself?
             </p>
             
+            <div className="mt-2 mb-4 px-4 py-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-center">
+              <Trophy className="w-5 h-5 text-yellow-400 mr-2 flex-shrink-0" />
+              <p className="text-yellow-200">
+                <span className="font-bold">$100 PRIZE!</span> First winner on Ninja mode claims $100. Screenshot your win & DM @ace.sq on Instagram!
+              </p>
+            </div>
+            
             <div className="flex flex-wrap gap-4">
               <Link 
                 to="/game" 

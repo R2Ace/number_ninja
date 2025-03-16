@@ -2,17 +2,27 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
-const LaunchPage = () => {
+const LaunchPage = ({ onEnterDojo }) => {
   const navigate = useNavigate();
   
   useEffect(() => {
     // After animations, redirect to home page
     const timer = setTimeout(() => {
-      navigate('/');
+      handleEnterDojo();
     }, 8000); // Increased time to allow for more animations
     
     return () => clearTimeout(timer);
   }, [navigate]);
+  
+  const handleEnterDojo = () => {
+    // Call the provided callback to update localStorage
+    if (onEnterDojo) {
+      onEnterDojo();
+    }
+    
+    // Navigate to home page
+    navigate('/');
+  };
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 flex flex-col items-center justify-center overflow-hidden relative px-4">
@@ -44,11 +54,11 @@ const LaunchPage = () => {
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1.5, ease: "easeOut" }}
-        className="relative mb-12 w-full max-w-2xl" // Increased max width
+        className="relative mb-12 w-full max-w-2xl"
       >
         <div className="absolute inset-0 bg-blue-500 rounded-full blur-3xl opacity-30"></div>
         <motion.h1 
-          className="text-6xl md:text-8xl font-bold text-white relative z-10 text-center" // Larger text
+          className="text-6xl md:text-8xl font-bold text-white relative z-10 text-center"
           animate={{ y: [0, -10, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}
         >
@@ -60,7 +70,7 @@ const LaunchPage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1, duration: 1 }}
-        className="text-2xl text-blue-300 mb-16 max-w-2xl text-center" // Larger text and spacing
+        className="text-2xl text-blue-300 mb-16 max-w-2xl text-center"
       >
         Welcome to the official launch! Test your guessing skills and become the ultimate Ninja.
       </motion.p>
@@ -69,14 +79,14 @@ const LaunchPage = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2, duration: 1 }}
-        className="relative mb-12" // Added bottom margin
+        className="relative mb-12"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg blur-lg opacity-70"></div>
         <motion.button
-          className="px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xl font-bold rounded-lg relative z-10" // Larger button
+          className="px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xl font-bold rounded-lg relative z-10"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/')}
+          onClick={handleEnterDojo}
         >
           Enter the Dojo
         </motion.button>
@@ -87,7 +97,7 @@ const LaunchPage = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2.5, duration: 1 }}
-        className="text-center mt-8 flex items-center justify-center space-x-4 relative" // More spacing
+        className="text-center mt-8 flex items-center justify-center space-x-4 relative"
       >
         {/* Left vertical popout */}
         <motion.div

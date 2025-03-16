@@ -1,5 +1,40 @@
 import React from 'react';
-import { Shield, Target, Zap, Award, Flame } from 'lucide-react';
+import { Shield, Target, Zap, Award, Flame, X } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+
+// Explicitly defined class maps that won't get purged by Tailwind
+const colorClasses = {
+  lime: {
+    gradient: 'from-lime-400 to-lime-600',
+    border: 'border-lime-400',
+    ring: 'ring-lime-400/50',
+    text: 'text-lime-100',
+  },
+  blue: {
+    gradient: 'from-blue-400 to-blue-600',
+    border: 'border-blue-400',
+    ring: 'ring-blue-400/50',
+    text: 'text-blue-100',
+  },
+  purple: {
+    gradient: 'from-purple-400 to-purple-600',
+    border: 'border-purple-400',
+    ring: 'ring-purple-400/50', 
+    text: 'text-purple-100',
+  },
+  amber: {
+    gradient: 'from-amber-400 to-amber-600',
+    border: 'border-amber-400',
+    ring: 'ring-amber-400/50',
+    text: 'text-amber-100',
+  },
+  red: {
+    gradient: 'from-red-400 to-red-600',
+    border: 'border-red-400',
+    ring: 'ring-red-400/50',
+    text: 'text-red-100',
+  }
+};
 
 export const difficultyLevels = {
   rookie: {
@@ -9,7 +44,7 @@ export const difficultyLevels = {
     range: '1-100',
     attempts: 10,
     description: 'Perfect for beginners. Guess a number between 1 and 100 with 10 attempts.',
-    color: 'green'
+    color: 'lime' // Changed from 'green' to 'lime'
   },
   ninja: {
     id: 'ninja',
@@ -50,55 +85,130 @@ export const difficultyLevels = {
 };
 
 const DifficultySelector = ({ selectedDifficulty, onSelectDifficulty, onClose }) => {
+  const { currentTheme } = useTheme();
+  
+  // Function to safely get color classes
+  const getColorClasses = (difficulty, isSelected) => {
+    const classes = colorClasses[difficulty.color] || colorClasses.blue;
+    
+    const baseClasses = `
+      w-[200px]
+      flex-shrink-0
+      flex flex-col items-center justify-between
+      p-6 rounded-xl text-white font-bold
+      transition-all duration-200 shadow-lg
+      bg-gradient-to-b ${classes.gradient}
+    `;
+    
+    const selectedClasses = `
+      border-2 ${classes.border} ring-2 ${classes.ring}
+      ring-offset-1 ring-offset-gray-900
+    `;
+    
+    const unselectedClasses = 'hover:scale-105';
+    
+    return `${baseClasses} ${isSelected ? selectedClasses : unselectedClasses}`;
+  };
+  
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="max-w-2xl w-full mx-4 bg-gradient-to-b from-blue-900 to-blue-700 rounded-2xl overflow-hidden">
-        <div className="p-8">
-          <h1 className="text-3xl font-bold text-white text-center mb-8">Select Difficulty Level</h1>
-          
-          <div className="flex flex-col space-y-3">
-            {Object.values(difficultyLevels).map((difficulty) => (
-              <button
-                key={difficulty.id}
-                onClick={() => onSelectDifficulty(difficulty.id)}
-                className={`w-full py-4 px-6 rounded-lg text-white font-bold transition-all duration-200 flex items-center
-                  ${selectedDifficulty === difficulty.id 
-                    ? `bg-gradient-to-r from-${difficulty.color}-600 to-${difficulty.color}-800 border-2 border-${difficulty.color}-400` 
-                    : 'bg-blue-800/80 hover:bg-blue-700 border border-blue-600/30 hover:border-blue-500'}`
-                }
-              >
-                <difficulty.icon className="w-5 h-5 mr-3" />
-                <div className="text-left">
-                  <div className="text-lg">{difficulty.name}</div>
-                  <div className="text-xs text-gray-300 mt-1">{difficulty.range} • {difficulty.attempts} attempts</div>
-                </div>
-              </button>
-            ))}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm pt-20">
+      <div
+        className="
+          w-full 
+          max-w-[95vw]
+          sm:max-w-3xl
+          md:max-w-4xl
+          lg:max-w-5xl
+          xl:max-w-6xl
+          2xl:max-w-7xl
+          mx-auto
+          bg-gradient-to-b from-gray-900 to-gray-800
+          rounded-2xl 
+          overflow-hidden 
+          shadow-2xl 
+          border 
+          border-gray-700 
+          max-h-[80vh] 
+          overflow-y-auto
+        "
+      >
+        <div className="sticky top-0 flex justify-between items-center p-6 border-b border-gray-700 bg-gray-900 z-10">
+          <h1 className="text-2xl font-bold text-white">Select Difficulty Level</h1>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors p-1 rounded-full hover:bg-gray-700"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        
+        <div className="p-10 overflow-x-auto">
+          <div className="flex gap-10 min-w-max justify-center">
+            {Object.values(difficultyLevels).map((difficulty) => {
+              const isSelected = selectedDifficulty === difficulty.id;
+              const colorClass = colorClasses[difficulty.color] || colorClasses.blue;
+              
+              return (
+                <button
+                  key={difficulty.id}
+                  onClick={() => onSelectDifficulty(difficulty.id)}
+                  className={getColorClasses(difficulty, isSelected)}
+                >
+                  <difficulty.icon
+                    className={`
+                      w-12 h-12 mb-6
+                      ${isSelected ? colorClass.text : 'text-gray-100'}
+                    `}
+                  />
+                  <div className="text-center w-full space-y-3">
+                    <div className="text-xl mb-2">{difficulty.name}</div>
+                    <div className="text-sm rounded-full py-1.5 px-3 bg-black/30">
+                      {difficulty.range}
+                    </div>
+                    <div className="text-sm rounded-full py-1.5 px-3 bg-black/30">
+                      {difficulty.attempts} attempts
+                    </div>
+                  </div>
+
+                  {isSelected && (
+                    <div className="mt-4 text-white text-sm font-normal px-4 py-1 rounded-full bg-black/20">
+                      Selected
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
-          
-          <div className="mt-8 text-center">
-            <p className="text-blue-200 max-w-lg mx-auto mb-6">
+
+          <div className="mt-12 text-center">
+            <p className="text-gray-300 max-w-2xl mx-auto text-lg">
               {selectedDifficulty && difficultyLevels[selectedDifficulty]?.description}
             </p>
           </div>
+        </div>
           
-          <div className="mt-8 flex justify-center space-x-4">
-            {selectedDifficulty && (
-              <button
-                onClick={() => onSelectDifficulty(selectedDifficulty)}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors"
-              >
-                Start Game
-              </button>
-            )}
-            
+        <div className="sticky bottom-0 p-6 bg-gray-900/90 backdrop-blur-sm flex justify-end space-x-4 border-t border-gray-700">
+          <button
+            onClick={onClose}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+          >
+            Cancel
+          </button>
+          
+          {selectedDifficulty && (
             <button
-              onClick={onClose}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-bold transition-colors"
+              onClick={() => {
+                onSelectDifficulty(selectedDifficulty);
+                onClose();
+              }}
+              className={`
+                ${currentTheme.buttonBg} 
+                text-white px-8 py-3 rounded-lg font-medium transition-colors
+              `}
             >
-              Back to Game
+              Start Game
             </button>
-          </div>
+          )}
         </div>
       </div>
     </div>

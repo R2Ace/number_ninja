@@ -1,4 +1,4 @@
-// Updated ThemeContext.js with enhanced theme definitions
+// Updated ThemeContext.js with all themes unlocked
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
@@ -29,7 +29,7 @@ export const themes = {
     background: 'from-gray-900 to-emerald-900',
     cardBg: 'bg-emerald-900/30',
     buttonBg: 'bg-emerald-600 hover:bg-emerald-700',
-    headingGradient: 'from-black to-black', // Black gradient for "the Unbeatable"
+    headingGradient: 'from-emerald-400 to-teal-500',
     accentText: 'text-emerald-400',
     highlightText: 'text-emerald-500',
     bannerGradient: 'from-teal-800 to-emerald-800',
@@ -100,8 +100,8 @@ export const ThemeProvider = ({ children }) => {
     return savedTheme && themes[savedTheme] ? themes[savedTheme] : themes.classic;
   });
   
-  // For the simplified version, we'll just have two themes unlocked
-  const unlockedThemes = ['classic', 'emerald'];
+  // MODIFIED: All themes are now unlocked for testing
+  const unlockedThemes = Object.keys(themes);
 
   // Save theme changes to localStorage
   useEffect(() => {
@@ -110,16 +110,16 @@ export const ThemeProvider = ({ children }) => {
 
   // Set a new theme
   const changeTheme = (themeId) => {
-    if (themes[themeId] && unlockedThemes.includes(themeId)) {
+    if (themes[themeId]) {
       setCurrentTheme(themes[themeId]);
       return true;
     }
     return false;
   };
 
-  // Check if a theme is unlocked
+  // Check if a theme is unlocked - now always returns true
   const isThemeUnlocked = (themeId) => {
-    return unlockedThemes.includes(themeId);
+    return true; // All themes are unlocked for testing
   };
 
   return (

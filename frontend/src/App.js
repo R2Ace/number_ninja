@@ -1,6 +1,6 @@
-// frontend/src/App.js
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+// frontend/src/App.js with fixed launch page redirect
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Banner from './components/Banner';
 import Footer from './components/Footer';
 import LandingPage from './components/LandingPage';
@@ -17,6 +17,54 @@ import ThemeSettings from './components/ThemeSettings';
 import { ThemeProvider } from './context/ThemeContext';
 import Support from './components/Support';
 
+// Check if user should be redirected to launch page
+const shouldRedirectToLaunch = () => {
+  // Set launch end time - 24 hours from now
+  const launchEndTime = new Date();
+  launchEndTime.setDate(launchEndTime.getDate() + 1); // 24 hours from now
+  
+  // Set this to March 17, 2025 to have it active for 24 hours from now
+  const launchEndTimestamp = launchEndTime.getTime();
+  
+  // Check if user has explicitly clicked through from launch page
+  const hasCompletedLaunch = localStorage.getItem('hasCompletedLaunch') === 'true';
+  
+  // If they haven't completed the launch flow and it's within the launch period, redirect
+  return !hasCompletedLaunch && Date.now() < launchEndTimestamp;
+};
+
+// Route guard component
+const RouteGuard = ({ children }) => {
+  const location = useLocation();
+  
+  // Don't redirect if already on launch page or resetting password
+  if (location.pathname === '/launch' || 
+      location.pathname === '/reset-password' || 
+      location.pathname.includes('/forgot-password')) {
+    return children;
+  }
+  
+  // Redirect to launch page if conditions are met
+  if (shouldRedirectToLaunch()) {
+    return <Navigate to="/launch" replace />;
+  }
+  
+  return children;
+};
+
+// Modified LaunchPage component to fix the redirect issue
+const EnhancedLaunchPage = () => {
+  // When rendering the LaunchPage, mark that we've seen it
+  useEffect(() => {
+    localStorage.setItem('hasSeenLaunch', 'true');
+  }, []);
+  
+  return <LaunchPage onEnterDojo={() => {
+    // When Enter Dojo is clicked, mark that we've completed the launch flow
+    localStorage.setItem('hasCompletedLaunch', 'true');
+  }} />;
+};
+
 function App() {
     return (
         <ThemeProvider>
@@ -25,16 +73,49 @@ function App() {
             <div className="App">
                 <Banner />
                 <Routes>
-                    <Route path="/" element={<LandingPage />} />
-                    <Route path="/game" element={<Game />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/learn" element={<LearnMore />} />
-                    <Route path="/history" element={<GameHistory />} />
+                    <Route path="/" element={
+                        <RouteGuard>
+                            <LandingPage />
+                        </RouteGuard>
+                    } />
+                    <Route path="/game" element={
+                        <RouteGuard>
+                            <Game />
+                        </RouteGuard>
+                    } />
+                    <Route path="/login" element={
+                        <RouteGuard>
+                            <Login />
+                        </RouteGuard>
+                    } />
+                    <Route path="/learn" element={
+                        <RouteGuard>
+                            <LearnMore />
+                        </RouteGuard>
+                    } />
+                    <Route path="/history" element={
+                        <RouteGuard>
+                            <GameHistory />
+                        </RouteGuard>
+                    } />
                     <Route path="/forgot-password" element={<PasswordResetRequest />} />
                     <Route path="/reset-password" element={<PasswordReset />} />
-                    <Route path="/launch" element={<LaunchPage />} />
-                    <Route path="/daily" element={<DailyChallenge />} />
-                    <Route path="/themes" element={<ThemeSettings />} />
+                    <Route path="/launch" element={<EnhancedLaunchPage />} />
+                    <Route path="/daily" element={
+                        <RouteGuard>
+                            <DailyChallenge />
+                        </RouteGuard>
+                    } />
+                    <Route path="/themes" element={
+                        <RouteGuard>
+                            <ThemeSettings />
+                        </RouteGuard>
+                    } />
+                    <Route path="/support" element={
+                        <RouteGuard>
+                            <Support />
+                        </RouteGuard>
+                    } />
                 </Routes>
                 <Footer />
             </div>

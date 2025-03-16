@@ -1,17 +1,27 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Trophy } from 'lucide-react';
 
 const LaunchPage = ({ onEnterDojo }) => {
   const navigate = useNavigate();
+  const [showPrize, setShowPrize] = useState(false);
   
   useEffect(() => {
-    // After animations, redirect to home page
-    const timer = setTimeout(() => {
-      handleEnterDojo();
-    }, 8000); // Increased time to allow for more animations
+    // Show prize announcement after Haitian tribute animation completes
+    const prizeTimer = setTimeout(() => {
+      setShowPrize(true);
+    }, 4500); // 3s delay + 0.8s animation + 0.7s buffer
     
-    return () => clearTimeout(timer);
+    // After all animations, redirect to home page
+    const redirectTimer = setTimeout(() => {
+      handleEnterDojo();
+    }, 10000); // Increased time to allow for prize announcement viewing
+    
+    return () => {
+      clearTimeout(prizeTimer);
+      clearTimeout(redirectTimer);
+    };
   }, [navigate]);
   
   const handleEnterDojo = () => {
@@ -119,6 +129,31 @@ const LaunchPage = ({ onEnterDojo }) => {
           className="w-1 bg-blue-500 absolute -right-8"
         />
       </motion.div>
+      
+      {/* Prize Announcement - appears after tribute animation */}
+      {showPrize && (
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="mt-12 max-w-lg w-full"
+        >
+          <div className="bg-gradient-to-r from-yellow-800 to-amber-700 rounded-xl p-4 shadow-lg relative overflow-hidden border-2 border-yellow-500/30">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/20 rounded-full -mr-8 -mt-8 blur-2xl"></div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="bg-yellow-500/20 p-3 rounded-lg">
+                  <Trophy className="w-8 h-8 text-yellow-400" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-lg">$100 PRIZE!</h3>
+                  <p className="text-yellow-200 text-sm">First winner on Ninja mode claims $100</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
       
       <motion.div
         initial={{ opacity: 0 }}

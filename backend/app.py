@@ -14,6 +14,10 @@ import re
 import stripe
 from datetime import datetime, timezone, timedelta
 import os
+import requests 
+from flask import request, jsonify
+from google.oauth2 import id_token # type: ignore
+from google.auth.transport import requests as google_requests # type: ignore
 
 # Validation functions
 def validate_username(username):
@@ -80,6 +84,41 @@ def validate_session_id(session_id):
         
     return True, "Valid session ID"
 
+def verify_google_token(token):
+    """Verify the Google ID token and extract user info."""
+    try:
+        # Get your Google Client ID from environment variable
+        GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+        if not GOOGLE_CLIENT_ID:
+            raise ValueError("GOOGLE_CLIENT_ID not set in environment variables")
+            
+        # Verify the token
+        idinfo = id_token.verify_oauth2_token(
+            token, google_requests.Request(), GOOGLE_CLIENT_ID)
+            
+        # Verify issuer
+        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            raise ValueError('Wrong issuer.')
+            
+        # Get user info
+        google_id = idinfo['sub']
+        email = idinfo['email']
+        name = idinfo.get('name', '')
+        picture = idinfo.get('picture', '')
+        
+        return {
+            'google_id': google_id,
+            'email': email,
+            'name': name,
+            'picture': picture,
+            'verified_email': idinfo.get('email_verified', False)
+        }
+        
+    except ValueError as e:
+        # Invalid token
+        print(f"Token validation error: {str(e)}")
+        return None
+
 app = Flask(__name__)
 # Configure CORS to allow requests from http://localhost:3000 to /api/*
 #CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": ["http://localhost:3000", "https://numberninja-red.vercel.app", "https://*.vercel.app", "https:localhost:*"] }}, methods=['GET', 'POST', 'OPTIONS'])
@@ -119,6 +158,11 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     scores = db.relationship('Score', backref='user', lazy=True)
     premium_themes = db.Column(db.Boolean, default=False)
+    
+    # Add these new fields for OAuth
+    google_id = db.Column(db.String(120), unique=True, nullable=True)
+    oauth_provider = db.Column(db.String(20), nullable=True)  # 'google', 'facebook', etc.
+    profile_picture = db.Column(db.String(256), nullable=True)
 
     def set_password(self, password):
         """Hash a password for storing"""
@@ -420,6 +464,79 @@ def get_score():
         return jsonify({'error': 'Game not started.'}), 400
 
     return jsonify({'score': state['score']}), 200
+
+# Route for Google authentication
+@app.route('/api/auth/google', methods=['POST'])
+@limiter.limit("20 per hour")
+def google_auth():
+    """Handle Google authentication."""
+    try:
+        token = request.json.get('token')
+        if not token:
+            return jsonify({'error': 'No token provided'}), 400
+            
+        # Verify the token
+        google_user = verify_google_token(token)
+        if not google_user:
+            return jsonify({'error': 'Invalid Google token'}), 401
+            
+        # Check if email is verified by Google
+        if not google_user.get('verified_email', False):
+            return jsonify({'error': 'Email not verified by Google'}), 401
+            
+        # Check if user already exists with this Google ID
+        user = User.query.filter_by(google_id=google_user['google_id']).first()
+        
+        # If not, check if user exists with this email
+        if not user:
+            user = User.query.filter_by(email=google_user['email']).first()
+            
+        # If still no user, create a new account
+        if not user:
+            # Generate a username from the email
+            username_base = google_user['email'].split('@')[0]
+            username = username_base
+            
+            # Make sure username is unique
+            suffix = 1
+            while User.query.filter_by(username=username).first():
+                username = f"{username_base}{suffix}"
+                suffix += 1
+                
+            # Create a new user
+            user = User(
+                username=username,
+                email=google_user['email'],
+                google_id=google_user['google_id'],
+                oauth_provider='google'
+            )
+            
+            # Set a random password for security
+            import secrets
+            random_pass = secrets.token_hex(16)
+            user.set_password(random_pass)
+            
+            db.session.add(user)
+            db.session.commit()
+            
+        # If user exists but doesn't have Google ID, update it
+        elif not user.google_id:
+            user.google_id = google_user['google_id']
+            user.oauth_provider = 'google'
+            db.session.commit()
+            
+        # Return user data
+        return jsonify({
+            'user_id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'oauth_provider': 'google'
+        }), 200
+        
+    except Exception as e:
+        print(f"Google auth error: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 # Route to register a new user
 @app.route('/api/register', methods=['POST'])

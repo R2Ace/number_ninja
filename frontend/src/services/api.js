@@ -125,6 +125,62 @@ export const register = (userData) => {
     );
 };
 
+// Add these Google OAuth functions here
+/**
+ * Process Google authentication by sending the token to the backend
+ * @param {string} token - The Google ID token
+ * @returns {Promise} - Promise resolving to user data
+ */
+export const authenticateWithGoogle = (token) => {
+  return withRetry(() => 
+    apiClient.post('/auth/google', { token })
+  ).then(response => {
+    // Store only non-sensitive data
+    const userData = {
+      user_id: response.data.user_id,
+      username: response.data.username,
+      email: response.data.email,
+      oauth_provider: 'google'
+    };
+    
+    localStorage.setItem('user', JSON.stringify(userData));
+    return response;
+  }).catch(error => {
+    if (error.response) {
+      // The server responded with an error status
+      const errorMessage = error.response.data.error || 'Google authentication failed';
+      console.error('Google auth error:', errorMessage);
+      throw new Error(errorMessage);
+    } else if (error.request) {
+      // No response received
+      console.error('No response from server');
+      throw new Error('No response from server. Please check your connection.');
+    } else {
+      // Request setup error
+      console.error('Request error:', error.message);
+      throw new Error('Error sending request. Please try again.');
+    }
+  });
+};
+
+/**
+ * Check if user is authenticated via an OAuth provider
+ * @returns {boolean} - True if user is authenticated with an OAuth provider
+ */
+export const isOAuthUser = () => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  return !!user.oauth_provider;
+};
+
+/**
+ * Get the current user's authentication method
+ * @returns {string|null} - 'google', 'email', or null if not authenticated
+ */
+export const getAuthProvider = () => {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  return user.oauth_provider || (user.user_id ? 'email' : null);
+};
+
 export const fetchLeaderboard = () => {
     return withRetry(() => 
         apiClient.get('/leaderboard')

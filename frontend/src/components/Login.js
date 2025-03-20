@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import {useNavigate} from 'react-router-dom';
-import { Target, User, Lock, Mail } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Target, User, Lock, Mail, ArrowRight } from 'lucide-react';
 import { login, register } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
+import GoogleAuth from './GoogleAuth';
 
 const Login = () => {
     const { currentTheme } = useTheme();
-    const navigate = useNavigate(); // Use this to redirect to another page
+    const navigate = useNavigate();
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({
         username: '',
@@ -14,6 +15,7 @@ const Login = () => {
         password: ''
     });
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const validateForm = () => {
         let isValid = true;
@@ -42,48 +44,49 @@ const Login = () => {
         
         setError(errors.username || errors.email || errors.password || '');
         return isValid;
-      };
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        setIsSubmitting(true);
 
         if (!validateForm()) {
+            setIsSubmitting(false);
             return;
         }
-        console.log('Form submitted:', formData);
         
         try {
             let response;
             if (isLogin) {
-                console.log('Attempting login...');
                 response = await login({
                     username: formData.username,
                     password: formData.password
                 });
-                console.log('Login response:', response);
 
-                //store user data in local storage and redirect to game page
+                // Store user data in local storage and redirect to game page
                 localStorage.setItem('user', JSON.stringify(response.data));
                 navigate('/game');
             } else {
-                console.log('Attempting registration...');
                 response = await register({
                     username: formData.username,
                     email: formData.email,
                     password: formData.password
                 });
-                console.log('Register response:', response);
 
-                //store user data in local storage and redirect to game page
+                // Store user data in local storage and redirect to game page
                 localStorage.setItem('user', JSON.stringify(response.data));
                 navigate('/game');
             }
         } catch (err) {
-            console.error('Detailed error:', {
+            console.error('Authentication error:', {
                 message: err.message,
                 response: err.response?.data,
                 status: err.response?.status
             });
+            setError(err.message || 'Authentication failed. Please try again.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -92,6 +95,11 @@ const Login = () => {
             ...formData,
             [e.target.name]: e.target.value
         });
+    };
+
+    const handleGoogleSuccess = (userData) => {
+        // Redirect to game page after successful Google authentication
+        navigate('/game');
     };
 
     return (
@@ -104,6 +112,18 @@ const Login = () => {
                         <h2 className="text-2xl font-bold text-white">
                             Number Ninja
                         </h2>
+                    </div>
+
+                    {/* Google Authentication */}
+                    <div className="mb-6">
+                        <GoogleAuth onSuccess={handleGoogleSuccess} />
+                    </div>
+
+                    {/* Divider */}
+                    <div className="flex items-center my-6">
+                        <div className="flex-grow border-t border-gray-700"></div>
+                        <span className="px-3 text-gray-500 text-sm">OR</span>
+                        <div className="flex-grow border-t border-gray-700"></div>
                     </div>
 
                     {/* Form */}
@@ -180,16 +200,38 @@ const Login = () => {
 
                         {/* Error Message */}
                         {error && (
-                            <div className="text-red-500 text-sm">{error}</div>
+                            <div className="text-red-500 text-sm bg-red-500/10 p-2 rounded">
+                                {error}
+                            </div>
                         )}
 
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            className={`w-full ${currentTheme.buttonBg} text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-all transform hover:scale-105`}
+                            disabled={isSubmitting}
+                            className={`w-full ${currentTheme.buttonBg} text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-all transform hover:scale-105 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            {isLogin ? 'Login' : 'Register'}
+                            {isSubmitting ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                                    <span>{isLogin ? 'Logging in...' : 'Registering...'}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>{isLogin ? 'Login' : 'Register'}</span>
+                                    <ArrowRight className="w-5 h-5" />
+                                </>
+                            )}
                         </button>
+
+                        {/* Forgot Password Link */}
+                        {isLogin && (
+                            <div className="text-center">
+                                <a href="/forgot-password" className="text-blue-400 hover:text-blue-300 text-sm">
+                                    Forgot your password?
+                                </a>
+                            </div>
+                        )}
 
                         {/* Toggle Login/Register */}
                         <div className="text-center mt-4">

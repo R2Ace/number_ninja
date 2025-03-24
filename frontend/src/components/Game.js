@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { startGame, makeGuess, resetGame, fetchLeaderboard } from '../services/api';
 import successSound from '../assets/success.mp3';
 import errorSound from '../assets/error.mp3';
-// Update the import statement to remove Instagram and add a replacement
 import { Target, RefreshCw, Send, Trophy, Calendar, Star, Settings } from 'lucide-react';
-// Add a non-deprecated social media icon as replacement
 import { MessageSquare } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { Link } from 'react-router-dom';
@@ -46,22 +44,6 @@ const ShareGameResult = ({ score, attempts, difficulty }) => {
                 <p className="text-gray-400">Solved in {attempts} attempts</p>
                 <p className="text-gray-400 mt-2">Battle Mode: {difficultyLevels[difficulty].name}</p>
             </div>
-            
-            {difficulty === 'ninja' && score > 0 && (
-                <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-4 mb-6 text-left">
-                    <div className="flex items-center mb-2">
-                        <Trophy className="w-5 h-5 text-yellow-500 mr-2" />
-                        <h4 className="text-yellow-300 font-medium">$100 PRIZE ELIGIBLE!</h4>
-                    </div>
-                    <p className="text-yellow-200 text-sm mb-2">
-                        You've beaten Ninja mode! You might be the first winner of our $100 prize.
-                    </p>
-                    <div className="flex items-center text-sm text-yellow-300">
-                        <MessageSquare className="w-4 h-4 mr-1" />
-                        <span>Save this image and DM @ace.sq on Instagram to claim!</span>
-                    </div>
-                </div>
-            )}
             
             <button 
                 onClick={handleShare}
@@ -381,7 +363,7 @@ const Game = () => {
                     )}
                 </div>
 
-                {/* Prize Announcement Banner */}
+                {/* Prize Announcement Banner - commented out as promotion period has ended 
                 <div className="max-w-4xl mx-auto mb-6">
                     <div className="bg-gradient-to-r from-yellow-800 to-amber-700 rounded-xl p-4 shadow-lg relative overflow-hidden border-2 border-yellow-500/30">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-yellow-500/20 rounded-full -mr-8 -mt-8 blur-2xl"></div>
@@ -409,6 +391,7 @@ const Game = () => {
                         </div>
                     </div>
                 </div>
+                */}
                 
                 {/* Daily Challenge Banner */}
                 <div className="max-w-4xl mx-auto mb-6">

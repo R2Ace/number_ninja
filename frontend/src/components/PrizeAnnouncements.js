@@ -3,6 +3,11 @@ import { Trophy, Camera, X, Info, Instagram } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 const PrizeAnnouncement = () => {
+  // Return null to temporarily disable the prize announcement
+  // Uncomment the code below when you want to show the prize announcement again
+  return null;
+
+  /*
   const { currentTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(true);
   
@@ -21,11 +26,11 @@ const PrizeAnnouncement = () => {
   return (
     <div className={`fixed bottom-20 left-0 right-0 mx-auto z-50 max-w-2xl px-4`}>
       <div className={`bg-gradient-to-r from-yellow-800 to-amber-700 rounded-xl p-4 shadow-2xl relative overflow-hidden border-2 border-yellow-500/50`}>
-        {/* Background effects */}
+        {/* Background effects *//*}
         <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/20 rounded-full -mr-8 -mt-8 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-20 h-20 bg-amber-400/20 rounded-full -ml-5 -mb-5 blur-2xl"></div>
         
-        {/* Close button */}
+        {/* Close button *//*}
         <button 
           onClick={handleClose}
           className="absolute top-2 right-2 p-1 text-white/70 hover:text-white bg-black/10 hover:bg-black/30 rounded-full transition-colors"
@@ -34,7 +39,7 @@ const PrizeAnnouncement = () => {
           <X className="w-4 h-4" />
         </button>
         
-        {/* Content */}
+        {/* Content *//*}
         <div className="flex items-center gap-4">
           <div className="bg-yellow-500/30 p-3 rounded-lg">
             <Trophy className="w-10 h-10 text-yellow-300" />
@@ -72,6 +77,7 @@ const PrizeAnnouncement = () => {
       </div>
     </div>
   );
+  */
 };
 
 export default PrizeAnnouncement;

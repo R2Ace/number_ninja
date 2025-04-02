@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -8,13 +8,14 @@ const GoogleAuth = ({ onSuccess }) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const googleButtonRef = useRef(null);
 
   useEffect(() => {
     // Load the Google API script
     const loadGoogleScript = () => {
       // Check if script is already loaded
       if (document.querySelector('script#google-auth')) {
-        initializeGoogleAuth();
+        setTimeout(initializeGoogleAuth, 100); // Add slight delay to ensure DOM is ready
         return;
       }
 
@@ -23,7 +24,7 @@ const GoogleAuth = ({ onSuccess }) => {
       script.id = 'google-auth';
       script.async = true;
       script.defer = true;
-      script.onload = initializeGoogleAuth;
+      script.onload = () => setTimeout(initializeGoogleAuth, 100); // Add delay here too
       document.body.appendChild(script);
     };
 
@@ -31,10 +32,20 @@ const GoogleAuth = ({ onSuccess }) => {
   }, []);
 
   const initializeGoogleAuth = () => {
-    if (!window.google) return;
+    if (!window.google) {
+      console.log("Google API not loaded");
+      return;
+    }
 
-    // Replace with your actual Google Client ID
-    const CLIENT_ID = '1070635270869-1v43qdOnqdmkm4e78du87c0||3grbjub.apps.googleusercontent.com';
+    // Correct Google Client ID 
+    const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+    console.log("Using Client ID:", CLIENT_ID);
+
+    // Check if button container ref is available
+    if (!googleButtonRef.current) {
+      console.error("Google sign-in button container ref not available");
+      return;
+    }
 
     window.google.accounts.id.initialize({
       client_id: CLIENT_ID,
@@ -43,15 +54,15 @@ const GoogleAuth = ({ onSuccess }) => {
       cancel_on_tap_outside: true,
     });
 
-    // Render the button
+    // Render the button using the ref
     window.google.accounts.id.renderButton(
-      document.getElementById('google-signin-button'),
+      googleButtonRef.current,
       { 
         theme: 'outline', 
         size: 'large',
         text: 'continue_with',
         shape: 'rectangular',
-        width: '100%'
+        width: 250
       }
     );
   };
@@ -112,7 +123,7 @@ const GoogleAuth = ({ onSuccess }) => {
       
       <div className="flex flex-col space-y-4">
         <div 
-          id="google-signin-button" 
+          ref={googleButtonRef}
           className="flex justify-center"
         ></div>
         

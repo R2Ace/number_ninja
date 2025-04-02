@@ -1,3 +1,4 @@
+index.html -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -9,6 +10,7 @@
       name="description"
       content="Number Ninja - The ultimate number guessing game"
     />
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>Number Ninja</title>
@@ -20,5 +22,23 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    
+    <!-- Google API Test Script -->
+    <script>
+      function testGoogleAPIAccess() {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyBJu5qYQgZAGqMbCoXzccB6u5x9NJ2_Xf4&callback=initMap`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+
+      function initMap() {
+        console.log("Google Maps API loaded successfully - general API access working");
+      }
+
+      // Run the test
+      testGoogleAPIAccess();
+    </script>
   </body>
 </html>

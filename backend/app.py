@@ -18,6 +18,12 @@ import requests
 from flask import request, jsonify
 from google.oauth2 import id_token # type: ignore
 from google.auth.transport import requests as google_requests # type: ignore
+import jwt
+from jwt.exceptions import InvalidTokenError
+
+# Add these environment variables
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_JWT_SECRET = os.getenv('SUPABASE_JWT_SECRET')  # This is your JWT secret from Supabase
 
 # Validation functions
 def validate_username(username):
@@ -119,29 +125,46 @@ def verify_google_token(token):
         print(f"Token validation error: {str(e)}")
         return None
 
+def verify_supabase_token(token):
+    """Verify a Supabase JWT token and extract user info."""
+    try:
+        # Decode the JWT token
+        payload = jwt.decode(
+            token,
+            SUPABASE_JWT_SECRET,
+            algorithms=["HS256"]
+        )
+        
+        # Extract user info from the payload
+        user_id = payload.get('sub')
+        email = payload.get('email')
+        
+        return {
+            'user_id': user_id,
+            'email': email
+        }
+    except InvalidTokenError as e:
+        print(f"Token validation error: {str(e)}")
+        return None
+
 app = Flask(__name__)
-# Configure CORS to allow requests from http://localhost:3000 to /api/*
-#CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": ["http://localhost:3000", "https://numberninja-red.vercel.app", "https://*.vercel.app", "https:localhost:*"] }}, methods=['GET', 'POST', 'OPTIONS'])
-# In app.py, update the CORS configuration
+# Configure CORS to allow requests from http://localhost:3000
 CORS(app, 
     resources={r"/api/*": {
-        "origins": [
-            "http://localhost:3000",
-            "https://numbersninjas.com",
-            "https://www.numbersninjas.com"  # Make sure both www and non-www versions are included
-        ],
+        "origins": ["http://localhost:3000"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True
+        "supports_credentials": True,
+        "expose_headers": ["Content-Type", "Authorization"]
     }}
 )
 # Configure the Flask app with the database settings
 app.config.from_object(Config)
 
 # Add secure session cookie settings
-app.config['SESSION_COOKIE_SECURE'] = True  # Only send cookies over HTTPS
-app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Prevent CSRF
+app.config['SESSION_COOKIE_SECURE'] = False  # Allow HTTP for local development
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 db = SQLAlchemy(app)
 print("Flask running with DB URI:", app.config['SQLALCHEMY_DATABASE_URI'])
@@ -161,7 +184,8 @@ class User(db.Model):
     
     # Add these new fields for OAuth
     google_id = db.Column(db.String(120), unique=True, nullable=True)
-    oauth_provider = db.Column(db.String(20), nullable=True)  # 'google', 'facebook', etc.
+    supabase_id = db.Column(db.String(120), unique=True, nullable=True)
+    oauth_provider = db.Column(db.String(20), nullable=True)  # 'google', 'facebook', 'supabase', etc.
     profile_picture = db.Column(db.String(256), nullable=True)
 
     def set_password(self, password):
@@ -200,12 +224,18 @@ MAX_ATTEMPTS = 5
 
 # Initialize rate limiter
 limiter = Limiter(
-    key_func = get_remote_address,
     app=app,
+    key_func=get_remote_address,
     default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://"
+    storage_uri="memory://",
+    strategy="fixed-window",
+    headers_enabled=True
 )
-#limiter.init_app(app)
+
+# Exclude OPTIONS requests from rate limiting
+@limiter.request_filter
+def exempt_options():
+    return request.method == 'OPTIONS'
 
 # Security headers
 @app.after_request
@@ -216,10 +246,10 @@ def add_security_headers(response):
     response.headers['X-XSS-Protection'] = '1; mode=block'
     # Prevent MIME type sniffing
     response.headers['X-Content-Type-Options'] = 'nosniff'
-    # Content Security Policy
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://www.google-analytics.com"
-    # HTTPS strict
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Content Security Policy - more permissive for development
+    response.headers['Content-Security-Policy'] = "default-src 'self' http://localhost:3000; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:5000 http://localhost:3000"
+    # HTTPS strict - disabled for local development
+    # response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     return response
 
 
@@ -535,6 +565,74 @@ def google_auth():
         
     except Exception as e:
         print(f"Google auth error: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# New route to handle Supabase authentication
+@app.route('/api/auth/supabase', methods=['POST'])
+def supabase_auth():
+    """Handle Supabase authentication."""
+    try:
+        token = request.json.get('token')
+        if not token:
+            return jsonify({'error': 'No token provided'}), 400
+            
+        # Verify the token
+        supabase_user = verify_supabase_token(token)
+        if not supabase_user:
+            return jsonify({'error': 'Invalid Supabase token'}), 401
+            
+        # Check if user already exists with this Supabase ID
+        user = User.query.filter_by(supabase_id=supabase_user['user_id']).first()
+        
+        # If not, check if user exists with this email
+        if not user:
+            user = User.query.filter_by(email=supabase_user['email']).first()
+            
+        # If still no user, create a new account
+        if not user:
+            # Generate a username from the email
+            username_base = supabase_user['email'].split('@')[0]
+            username = username_base
+            
+            # Make sure username is unique
+            suffix = 1
+            while User.query.filter_by(username=username).first():
+                username = f"{username_base}{suffix}"
+                suffix += 1
+                
+            # Create a new user
+            user = User(
+                username=username,
+                email=supabase_user['email'],
+                supabase_id=supabase_user['user_id'],
+                oauth_provider='supabase'
+            )
+            
+            # Set a random password for security
+            import secrets
+            random_pass = secrets.token_hex(16)
+            user.set_password(random_pass)
+            
+            db.session.add(user)
+            db.session.commit()
+            
+        # If user exists but doesn't have Supabase ID, update it
+        elif not user.supabase_id:
+            user.supabase_id = supabase_user['user_id']
+            user.oauth_provider = 'supabase'
+            db.session.commit()
+            
+        # Return user data
+        return jsonify({
+            'user_id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'oauth_provider': 'supabase'
+        }), 200
+        
+    except Exception as e:
+        print(f"Supabase auth error: {str(e)}")
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 

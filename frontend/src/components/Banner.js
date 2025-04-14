@@ -27,25 +27,52 @@ const Banner = () => {
     };
     
     return (
-        <nav className="bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                    <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-                        <img src={logo} alt="Luminary Labz" className="h-8 w-auto" />
-                        <div className="flex items-center space-x-2">
-                            <Target className={`h-5 w-5 text-${currentTheme.primary}-500`}/>
-                            <span className="text-lg font-semibold text-white">Number Ninja</span>
-                        </div>
+        <div className={`bg-gradient-to-b ${currentTheme.background} border-b border-gray-800`}>
+            <div className="container mx-auto px-4 py-4">
+                <div className="flex items-center justify-between">
+                    {/* Logo */}
+                    <Link to="/" className="flex items-center space-x-2">
+                        <Target className={`w-6 h-6 text-${currentTheme.primary}-500`} />
+                        <span className="text-xl font-bold text-white">Number Ninja</span>
                     </Link>
                     
-                    <div className="flex items-center space-x-4">
+                    {/* Navigation */}
+                    <div className="flex items-center space-x-6">
+                        <Link 
+                            to="/game" 
+                            className={`text-gray-300 hover:text-${currentTheme.primary}-400 transition-colors`}
+                        >
+                            Play
+                        </Link>
+                        <Link 
+                            to="/history" 
+                            className={`text-gray-300 hover:text-${currentTheme.primary}-400 transition-colors`}
+                        >
+                            History
+                        </Link>
+                        <Link 
+                            to="/themes" 
+                            className={`text-gray-300 hover:text-${currentTheme.primary}-400 transition-colors`}
+                        >
+                            Themes
+                        </Link>
+                        
+                        {/* User Profile */}
                         {currentUser ? (
                             <div className="relative">
                                 <button 
                                     onClick={() => setShowDropdown(!showDropdown)}
                                     className={`flex items-center space-x-2 ${currentTheme.buttonBg} px-3 py-2 rounded-lg text-white`}
                                 >
-                                    <User className="h-5 w-5" />
+                                    {currentUser.profile_picture ? (
+                                        <img 
+                                            src={currentUser.profile_picture} 
+                                            alt={currentUser.username}
+                                            className="w-6 h-6 rounded-full"
+                                        />
+                                    ) : (
+                                        <User className="h-5 w-5" />
+                                    )}
                                     <span>{currentUser.username}</span>
                                 </button>
                                 
@@ -72,14 +99,14 @@ const Banner = () => {
                                             onClick={() => setShowDropdown(false)}
                                         >
                                             <Settings className="h-4 w-4 mr-2" />
-                                            Theme Settings
+                                            Themes
                                         </Link>
-                                        <button 
+                                        <button
                                             onClick={handleLogout}
-                                            className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 flex items-center"
+                                            className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 flex items-center"
                                         >
                                             <LogOut className="h-4 w-4 mr-2" />
-                                            Sign Out
+                                            Logout
                                         </button>
                                     </div>
                                 )}
@@ -87,18 +114,15 @@ const Banner = () => {
                         ) : (
                             <Link 
                                 to="/login" 
-                                className={`${currentTheme.buttonBg} text-white px-4 py-2 rounded-lg transform hover:scale-105 transition-all`}
+                                className={`${currentTheme.buttonBg} px-4 py-2 rounded-lg text-white`}
                             >
-                                <div className="flex items-center space-x-2">
-                                    <Target className={`h-5 w-5 text-white`}/>
-                                    <span>Login</span>
-                                </div>
+                                Login
                             </Link>
                         )}
                     </div>
                 </div>
             </div>
-        </nav>
+        </div>
     );
 };
 

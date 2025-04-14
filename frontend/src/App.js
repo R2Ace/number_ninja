@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Banner from './components/Banner';
-import PrizeAnnouncements from './components/PrizeAnnouncements'; // Add this import
 import Footer from './components/Footer';
 import LandingPage from './components/LandingPage';
 import Game from './components/Game';
@@ -41,7 +40,7 @@ const RouteGuard = ({ children }) => {
   // Don't redirect if already on launch page or resetting password
   if (location.pathname === '/launch' || 
       location.pathname === '/reset-password' || 
-      location.pathname.includes('/forgot-password')) {
+      location.pathname.includes('/forgot-password')) {  // Remove callback path from exception list
     return children;
   }
   
@@ -73,7 +72,6 @@ function App() {
         <Router>
             <div className="App">
                 <Banner />
-                <PrizeAnnouncements />
                 <Routes>
                     <Route path="/" element={
                         <RouteGuard>
@@ -113,11 +111,7 @@ function App() {
                             <ThemeSettings />
                         </RouteGuard>
                     } />
-                    <Route path="/support" element={
-                        <RouteGuard>
-                            <Support />
-                        </RouteGuard>
-                    } />
+                    <Route path="/support" element={<Support />} />
                 </Routes>
                 <Footer />
             </div>
